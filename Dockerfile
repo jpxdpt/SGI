@@ -13,7 +13,9 @@ RUN apk add --no-cache \
     pango-dev \
     giflib-dev \
     pixman-dev \
-    pkgconfig
+    pkgconf \
+    librsvg-dev \
+    libjpeg-turbo-dev
 
 WORKDIR /app
 
