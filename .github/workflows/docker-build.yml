@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'server/**'
-      - '.github/workflows/docker-build.yml'
+  workflow_dispatch:  # Permite executar manualmente
 
 env:
   REGISTRY: ghcr.io
