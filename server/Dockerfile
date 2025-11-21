@@ -26,6 +26,10 @@ COPY api ./api
 # Compilar TypeScript
 RUN npx tsc
 
+# Verificar se a compilação funcionou
+RUN ls -la dist/ || echo "Dist directory not found"
+RUN ls -la dist/server.js || echo "server.js not found in dist"
+
 # Remover devDependencies após compilar (opcional, para reduzir tamanho)
 RUN npm prune --production
 
