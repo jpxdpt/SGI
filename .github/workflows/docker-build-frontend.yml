@@ -24,15 +24,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 1
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Initialize and update submodules
+      - name: Verify files exist
         run: |
-          git submodule update --init --recursive
-          ls -la dashboard-sgi/ || echo "dashboard-sgi not found"
-          ls -la dashboard-sgi/package.json || echo "package.json not found"
+          echo "Current directory:"
+          pwd
+          echo "Listing root:"
+          ls -la
+          echo "Checking dashboard-sgi:"
+          ls -la dashboard-sgi/ || echo "ERROR: dashboard-sgi not found"
+          echo "Checking package.json:"
+          ls -la dashboard-sgi/package.json || echo "ERROR: package.json not found"
+          echo "Checking Dockerfile.frontend:"
+          ls -la Dockerfile.frontend || echo "ERROR: Dockerfile.frontend not found"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
