@@ -24,7 +24,7 @@ COPY tsconfig.json ./
 COPY api ./api
 
 # Compilar TypeScript
-RUN npm run build || npx tsc
+RUN npx tsc
 
 # Remover devDependencies após compilar (opcional, para reduzir tamanho)
 RUN npm prune --production
