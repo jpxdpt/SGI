@@ -12,8 +12,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
-# Instalar dependências (sem devDependencies para reduzir tamanho)
-RUN npm ci --omit=dev
+# Instalar dependências (incluindo devDependencies para compilar)
+RUN npm ci
 
 # Gerar Prisma Client
 RUN npx prisma generate
@@ -23,11 +23,17 @@ COPY src ./src
 COPY tsconfig.json ./
 COPY api ./api
 
+# Compilar TypeScript
+RUN npm run build || npx tsc
+
+# Remover devDependencies após compilar (opcional, para reduzir tamanho)
+RUN npm prune --production
+
 # Expor porta
 EXPOSE 5801
 
 # Variável de ambiente
 ENV NODE_ENV=production
 
-# Comando para iniciar
-CMD ["npm", "run", "start"]
+# Comando para iniciar (usar JavaScript compilado)
+CMD ["node", "dist/server.js"]
