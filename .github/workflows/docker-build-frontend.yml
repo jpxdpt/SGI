@@ -70,9 +70,11 @@ jobs:
           echo "Files in root:"
           ls -la
           echo "Files in dashboard-sgi:"
-          ls -la dashboard-sgi/ | head -20
+          ls -la dashboard-sgi/ | head -20 || echo "dashboard-sgi not found"
           echo "Checking if dashboard-sgi is in .dockerignore:"
           cat .dockerignore | grep dashboard || echo "dashboard-sgi NOT in .dockerignore (good)"
+          echo "Checking .dockerignore content:"
+          cat .dockerignore | head -10
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
