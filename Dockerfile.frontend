@@ -3,10 +3,14 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Debug: listar ficheiros disponíveis
-RUN echo "Listing files in build context:" && ls -la / || true
+# Debug: verificar se dashboard-sgi existe no contexto
+RUN echo "Checking build context..." && \
+    ls -la / | head -20 || true && \
+    echo "Looking for dashboard-sgi..." && \
+    find / -name "dashboard-sgi" -type d 2>/dev/null | head -5 || echo "dashboard-sgi not found in /"
 
 # Copiar ficheiros de dependências do dashboard-sgi
+# Usar caminho absoluto do contexto
 COPY dashboard-sgi/package.json dashboard-sgi/package-lock.json ./
 
 # Instalar dependências

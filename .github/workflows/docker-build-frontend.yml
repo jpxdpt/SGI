@@ -29,24 +29,33 @@ jobs:
           
       - name: Fix dashboard-sgi if it has .git
         run: |
-          if [ -d "dashboard-sgi/.git" ]; then
-            echo "dashboard-sgi has .git, removing it and copying files..."
-            # Fazer backup dos ficheiros
-            cp -r dashboard-sgi dashboard-sgi-backup || true
-            # Remover .git do dashboard-sgi
-            rm -rf dashboard-sgi/.git
-            # Se o backup funcionou, restaurar
-            if [ -d "dashboard-sgi-backup" ]; then
-              # Garantir que temos os ficheiros
-              if [ ! -f "dashboard-sgi/package.json" ] && [ -f "dashboard-sgi-backup/package.json" ]; then
-                cp -r dashboard-sgi-backup/* dashboard-sgi/ || true
-              fi
-              rm -rf dashboard-sgi-backup
-            fi
+          echo "Checking dashboard-sgi status..."
+          if [ ! -d "dashboard-sgi" ]; then
+            echo "ERROR: dashboard-sgi directory does not exist!"
+            exit 1
           fi
-          echo "Verifying dashboard-sgi:"
+          
+          echo "dashboard-sgi exists, checking contents..."
+          ls -la dashboard-sgi/ | head -20
+          
+          if [ -d "dashboard-sgi/.git" ]; then
+            echo "dashboard-sgi has .git, this is a nested repo/submodule"
+            echo "Removing .git to make it a normal directory..."
+            rm -rf dashboard-sgi/.git
+            echo ".git removed"
+          fi
+          
+          # Verificar se package.json existe
+          if [ ! -f "dashboard-sgi/package.json" ]; then
+            echo "ERROR: dashboard-sgi/package.json NOT found after fix!"
+            echo "Contents of dashboard-sgi:"
+            ls -la dashboard-sgi/ || echo "Cannot list dashboard-sgi"
+            exit 1
+          fi
+          
+          echo "✓ dashboard-sgi/package.json found"
+          echo "Final verification:"
           ls -la dashboard-sgi/ | head -10
-          test -f dashboard-sgi/package.json && echo "✓ package.json found" || echo "✗ package.json NOT found"
 
       - name: Verify files exist
         run: |
