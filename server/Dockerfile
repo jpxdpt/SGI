@@ -30,4 +30,5 @@ EXPOSE 5801
 ENV NODE_ENV=production
 
 # Comando para iniciar (usar ts-node diretamente - mais simples e confiável)
+# NOTA: Não removemos devDependencies porque ts-node é necessário
 CMD ["npx", "ts-node", "--transpile-only", "src/server.ts"]
