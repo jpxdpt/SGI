@@ -2,7 +2,9 @@
 FROM node:18-alpine
 
 # Instalar dependências do sistema necessárias para Prisma e outras libs
-RUN apk add --no-cache libc6-compat openssl python3 make g++
+RUN apk add --no-cache libc6-compat openssl python3 make g++ \
+    cairo-dev jpeg-dev pango-dev giflib-dev pixman-dev pkgconf \
+    librsvg-dev libjpeg-turbo-dev
 
 WORKDIR /app
 
@@ -29,4 +31,3 @@ ENV NODE_ENV=production
 
 # Comando para iniciar
 CMD ["npm", "run", "start"]
-

@@ -1,0 +1,191 @@
+Guia Docker + Localtunnel - Deploy Local
+==========================================
+
+Este guia mostra como executar o backend em Docker e expor com localtunnel.
+
+PASSO 1: Instalar Docker
+-------------------------
+
+Windows:
+1. Baixa Docker Desktop: https://www.docker.com/products/docker-desktop
+2. Instala e reinicia o computador
+3. Abre Docker Desktop e verifica que esta a correr
+
+Verificar instalacao:
+   docker --version
+   docker-compose --version
+
+PASSO 2: Instalar Node.js (para localtunnel)
+---------------------------------------------
+
+Windows:
+1. Baixa Node.js: https://nodejs.org/
+2. Instala a versao LTS
+3. Verifica: node --version
+
+PASSO 3: Preparar Backend
+-------------------------
+
+1. Vai ao diretorio do servidor:
+   cd server
+
+2. Cria um ficheiro .env com as variaveis:
+   DATABASE_URL=postgresql://neondb_owner:npg_RgD2x5QBZUMd@ep-little-band-absv82a0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   JWT_SECRET=cc02d2f9edea2fa25de385eb061da48db5a3956e42a05c834cfb194fca9f8608
+   JWT_REFRESH_SECRET=ecc63e21c4cd7642f68bd2ad947a9953f66063d74d145622eca1b07ba5636975
+   DEFAULT_TENANT_ID=tenant-default
+   PORT=5801
+   NODE_ENV=production
+   ALLOW_ALL_ORIGINS=true
+   BASE_PATH=/api
+
+PASSO 4: Construir Imagem Docker
+---------------------------------
+
+No diretorio server:
+   docker build -t sgi-backend .
+
+Isto vai criar a imagem Docker do backend.
+
+PASSO 5: Executar Container
+-----------------------------
+
+Opcao A: Docker run direto
+
+   docker run -d \
+     --name sgi-backend \
+     -p 5801:5801 \
+     --env-file .env \
+     sgi-backend
+
+Opcao B: Docker Compose (Recomendado)
+
+1. Verifica que o docker-compose.yml existe em server/
+2. Executa:
+   cd server
+   docker-compose up -d
+
+Verificar se esta a correr:
+   docker ps
+
+Deve aparecer o container sgi-backend a correr.
+
+PASSO 6: Instalar Localtunnel
+-------------------------------
+
+Globalmente:
+   npm install -g localtunnel
+
+Ou localmente no projeto:
+   npm install localtunnel
+
+PASSO 7: Expor Backend com Localtunnel
+---------------------------------------
+
+1. Certifica-te que o backend esta a correr em localhost:5801
+
+2. Abre um novo terminal e executa:
+   lt --port 5801 --subdomain sgi-backend
+
+   OU se quiseres um subdominio customizado:
+   lt --port 5801 --subdomain teu-subdominio
+
+   NOTA: O subdominio pode nao estar disponivel. Se der erro, tenta outro nome.
+
+3. O localtunnel vai dar-te uma URL tipo:
+   https://sgi-backend.loca.lt
+
+4. Esta URL expoe o teu backend local na internet!
+
+PASSO 8: Configurar Frontend
+-----------------------------
+
+No Vercel (ou onde tiveres o frontend), atualiza a variavel:
+
+   VITE_API_BASE_URL=https://sgi-backend.loca.lt/api
+
+   (Substitui pelo URL real que o localtunnel te deu)
+
+PASSO 9: Manter Localtunnel a Correr
+-------------------------------------
+
+O localtunnel precisa de estar sempre a correr enquanto quiseres acessar o backend.
+
+Para manter a correr em background (Windows PowerShell):
+   Start-Process powershell -ArgumentList "-NoExit", "-Command", "lt --port 5801 --subdomain sgi-backend"
+
+Ou usa um terminal separado e deixa-o aberto.
+
+TROUBLESHOOTING
+---------------
+
+Problema: Docker nao inicia
+Solucao: Verifica que o Docker Desktop esta a correr
+         Reinicia o Docker Desktop se necessario
+
+Problema: Porta 5801 ja em uso
+Solucao: Para o processo que esta a usar a porta:
+         Windows: netstat -ano | findstr :5801
+         Depois: taskkill /PID <PID> /F
+
+Problema: Localtunnel nao conecta
+Solucao: Verifica que o backend esta a correr em localhost:5801
+         Tenta sem subdominio: lt --port 5801
+         Verifica firewall/antivirus
+
+Problema: URL do localtunnel muda
+Solucao: Usa um subdominio fixo (pode nao estar disponivel)
+         Ou atualiza o frontend sempre que a URL mudar
+
+Problema: CORS errors
+Solucao: Verifica que ALLOW_ALL_ORIGINS=true no .env
+         E que o frontend tem o URL correto do localtunnel
+
+VANTAGENS
+---------
+
+- Gratis
+- Controlo total sobre o ambiente
+- Facil de testar localmente
+- Sem limites de tempo (diferente do ngrok free)
+
+DESVANTAGENS
+------------
+
+- Precisa de manter o computador ligado
+- URL pode mudar (se nao usares subdominio)
+- Precisa de manter localtunnel a correr
+- Menos estavel que servicos cloud
+
+COMANDOS UTEIS
+--------------
+
+Ver logs do container:
+   docker logs sgi-backend
+
+Parar container:
+   docker stop sgi-backend
+
+Iniciar container:
+   docker start sgi-backend
+
+Remover container:
+   docker rm sgi-backend
+
+Ver containers a correr:
+   docker ps
+
+Ver todas as imagens:
+   docker images
+
+DICAS
+-----
+
+1. Usa Docker Compose para facilitar a gestao
+2. Mantem o terminal do localtunnel aberto
+3. Usa um subdominio fixo se possivel
+4. Configura o frontend com o URL do localtunnel
+5. Verifica os logs se algo nao funcionar
+
+Se precisares de ajuda, avisa!
+

@@ -5,11 +5,9 @@ services:
     build: .
     ports:
       - "5801:5801"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-      - DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID:-tenant-default}
       - PORT=5801
       - NODE_ENV=production
     volumes:
