@@ -26,6 +26,27 @@ jobs:
         with:
           fetch-depth: 1
           submodules: false
+          
+      - name: Fix dashboard-sgi if it has .git
+        run: |
+          if [ -d "dashboard-sgi/.git" ]; then
+            echo "dashboard-sgi has .git, removing it and copying files..."
+            # Fazer backup dos ficheiros
+            cp -r dashboard-sgi dashboard-sgi-backup || true
+            # Remover .git do dashboard-sgi
+            rm -rf dashboard-sgi/.git
+            # Se o backup funcionou, restaurar
+            if [ -d "dashboard-sgi-backup" ]; then
+              # Garantir que temos os ficheiros
+              if [ ! -f "dashboard-sgi/package.json" ] && [ -f "dashboard-sgi-backup/package.json" ]; then
+                cp -r dashboard-sgi-backup/* dashboard-sgi/ || true
+              fi
+              rm -rf dashboard-sgi-backup
+            fi
+          fi
+          echo "Verifying dashboard-sgi:"
+          ls -la dashboard-sgi/ | head -10
+          test -f dashboard-sgi/package.json && echo "✓ package.json found" || echo "✗ package.json NOT found"
 
       - name: Verify files exist
         run: |
