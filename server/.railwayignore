@@ -7,8 +7,6 @@ uploads
 reports
 .git
 .gitignore
-README.md
-README.txt
 *.md
 *.txt
 .vscode
@@ -29,4 +27,7 @@ __mocks__
 .prettierignore
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+research
+scripts
+data
 
