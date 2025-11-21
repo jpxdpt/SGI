@@ -3,7 +3,7 @@
 node_modules
 
 # Ignorar diretórios desnecessários
-dashboard-sgi
+# dashboard-sgi - NÃO ignorar, é necessário para o build do frontend
 dist
 .env
 .env.local
@@ -46,7 +46,7 @@ server/build
 node_modules
 
 # Ignorar diretórios desnecessários
-dashboard-sgi
+# dashboard-sgi - NÃO ignorar, é necessário para o build do frontend
 dist
 .env
 .env.local
@@ -83,4 +83,5 @@ data
 server/dist
 server/.next
 server/build
+
 
