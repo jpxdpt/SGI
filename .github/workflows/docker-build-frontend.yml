@@ -26,6 +26,14 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify dashboard-sgi exists
+        run: |
+          ls -la dashboard-sgi/ || echo "dashboard-sgi not found"
+          ls -la dashboard-sgi/package.json || echo "package.json not found"
+          pwd
+          find . -name "package.json" -path "*/dashboard-sgi/*" || echo "No package.json found in dashboard-sgi"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -3,14 +3,26 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Verificar se dashboard-sgi existe
+RUN ls -la / || true
+
 # Copiar ficheiros de dependências do dashboard-sgi
 COPY dashboard-sgi/package.json dashboard-sgi/package-lock.json ./
 
 # Instalar dependências
 RUN npm ci
 
-# Copiar código fonte do dashboard-sgi
-COPY dashboard-sgi/ ./
+# Copiar código fonte do dashboard-sgi (todos os ficheiros necessários)
+COPY dashboard-sgi/src ./src
+COPY dashboard-sgi/public ./public
+COPY dashboard-sgi/index.html ./
+COPY dashboard-sgi/vite.config.ts ./
+COPY dashboard-sgi/tsconfig.json ./
+COPY dashboard-sgi/tsconfig.app.json ./
+COPY dashboard-sgi/tsconfig.node.json ./
+COPY dashboard-sgi/postcss.config.js ./
+COPY dashboard-sgi/tailwind.config.js ./
+COPY dashboard-sgi/eslint.config.js ./
 
 # Build da aplicação
 RUN npm run build
