@@ -47,18 +47,11 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Verify Dockerfile exists
-        run: |
-          ls -la dashboard-sgi/Dockerfile || echo "Dockerfile not found"
-          ls -la dashboard-sgi/ || echo "dashboard-sgi directory not found"
-          pwd
-          find . -name "Dockerfile" -type f
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./dashboard-sgi
-          file: Dockerfile
+          context: .
+          file: ./Dockerfile.frontend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
