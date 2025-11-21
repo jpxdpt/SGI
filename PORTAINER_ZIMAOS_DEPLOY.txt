@@ -1,0 +1,234 @@
+Deploy no Portainer (ZimaOS) - Guia Completo
+==============================================
+
+Este guia mostra como fazer deploy do backend SGI no Portainer no teu servidor ZimaOS.
+
+PASSO 1: Preparar Imagem Docker Localmente
+-------------------------------------------
+
+1. No teu computador Windows, vai ao diretorio do servidor:
+   cd server
+
+2. Construir a imagem Docker:
+   docker build -t sgi-backend:latest .
+
+3. Verificar que a imagem foi criada:
+   docker images | findstr sgi-backend
+
+PASSO 2: Exportar Imagem Docker
+---------------------------------
+
+Opcao A: Exportar como ficheiro .tar (Recomendado)
+
+1. Exportar a imagem:
+   docker save sgi-backend:latest -o sgi-backend.tar
+
+2. Comprimir (opcional, mas recomendado):
+   Usa 7-Zip ou WinRAR para comprimir o ficheiro
+
+3. Transferir para o servidor ZimaOS:
+   - Usa SCP, SFTP, ou interface web do ZimaOS
+   - Copia o ficheiro sgi-backend.tar (ou .tar.gz) para o servidor
+
+Opcao B: Push para Docker Registry (Se tiveres configurado)
+
+1. Fazer tag da imagem:
+   docker tag sgi-backend:latest teu-registry.com/sgi-backend:latest
+
+2. Fazer push:
+   docker push teu-registry.com/sgi-backend:latest
+
+3. No Portainer, podes fazer pull diretamente
+
+PASSO 3: Importar Imagem no ZimaOS
+-----------------------------------
+
+1. Acede ao servidor ZimaOS (SSH ou interface web)
+
+2. Importar a imagem:
+   docker load -i sgi-backend.tar
+
+   OU se estiver comprimida:
+   gunzip -c sgi-backend.tar.gz | docker load
+
+3. Verificar que a imagem foi importada:
+   docker images | grep sgi-backend
+
+PASSO 4: Configurar no Portainer
+---------------------------------
+
+1. Abre o Portainer no teu navegador (geralmente http://servidor-ip:9000)
+
+2. Vai a "Containers" -> "Add container"
+
+3. Configuracao basica:
+   Name: sgi-backend
+   Image: sgi-backend:latest
+
+4. Port mapping:
+   Container: 5801
+   Host: 5801 (ou outra porta se preferires)
+   Protocol: TCP
+
+5. Environment variables (clica em "Env"):
+   DATABASE_URL=postgresql://neondb_owner:npg_RgD2x5QBZUMd@ep-little-band-absv82a0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   JWT_SECRET=cc02d2f9edea2fa25de385eb061da48db5a3956e42a05c834cfb194fca9f8608
+   JWT_REFRESH_SECRET=ecc63e21c4cd7642f68bd2ad947a9953f66063d74d145622eca1b07ba5636975
+   DEFAULT_TENANT_ID=tenant-default
+   PORT=5801
+   NODE_ENV=production
+   ALLOW_ALL_ORIGINS=true
+   BASE_PATH=/api
+
+6. Restart policy:
+   Always (recomendado)
+
+7. Clica em "Deploy the container"
+
+PASSO 5: Verificar se esta a Correr
+------------------------------------
+
+1. No Portainer, vai a "Containers"
+2. Verifica que o container "sgi-backend" esta com status "Running"
+3. Clica no container para ver os logs
+4. Verifica que nao ha erros
+
+PASSO 6: Testar Backend
+------------------------
+
+1. No navegador ou com curl:
+   http://servidor-ip:5801/health
+
+2. Deve retornar:
+   {"status":"ok"}
+
+PASSO 7: Configurar Frontend
+----------------------------
+
+No Vercel (ou onde tiveres o frontend), atualiza:
+
+   VITE_API_BASE_URL=http://servidor-ip:5801/api
+
+   OU se tiveres dominio:
+   VITE_API_BASE_URL=https://teu-dominio.com/api
+
+OPCAO ALTERNATIVA: Usar Docker Compose no Portainer
+----------------------------------------------------
+
+Se preferires usar docker-compose:
+
+1. No Portainer, vai a "Stacks" -> "Add stack"
+
+2. Nome: sgi-backend
+
+3. Cola este conteudo no editor:
+
+   version: '3.8'
+   
+   services:
+     backend:
+       image: sgi-backend:latest
+       ports:
+         - "5801:5801"
+       environment:
+         - DATABASE_URL=postgresql://neondb_owner:npg_RgD2x5QBZUMd@ep-little-band-absv82a0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+         - JWT_SECRET=cc02d2f9edea2fa25de385eb061da48db5a3956e42a05c834cfb194fca9f8608
+         - JWT_REFRESH_SECRET=ecc63e21c4cd7642f68bd2ad947a9953f66063d74d145622eca1b07ba5636975
+         - DEFAULT_TENANT_ID=tenant-default
+         - PORT=5801
+         - NODE_ENV=production
+         - ALLOW_ALL_ORIGINS=true
+         - BASE_PATH=/api
+       volumes:
+         - sgi-uploads:/app/uploads
+         - sgi-reports:/app/reports
+       restart: unless-stopped
+   
+   volumes:
+     sgi-uploads:
+     sgi-reports:
+
+4. Clica em "Deploy the stack"
+
+TROUBLESHOOTING
+---------------
+
+Problema: Imagem nao carrega
+Solucao: Verifica que o ficheiro .tar esta completo
+         Tenta descomprimir antes de importar
+         Verifica espaco em disco no servidor
+
+Problema: Container nao inicia
+Solucao: Verifica os logs no Portainer
+         Verifica que todas as variaveis de ambiente estao corretas
+         Verifica que a porta nao esta em uso
+
+Problema: Erro de conexao a base de dados
+Solucao: Verifica que o servidor tem acesso a internet
+         Verifica que a DATABASE_URL esta correta
+         Verifica firewall do servidor
+
+Problema: CORS errors
+Solucao: Verifica que ALLOW_ALL_ORIGINS=true
+         Verifica que o frontend tem o URL correto
+
+Problema: Porta nao acessivel
+Solucao: Verifica firewall do ZimaOS
+         Verifica que a porta esta mapeada corretamente
+         Verifica que o container esta a correr
+
+COMANDOS UTEIS (SSH no ZimaOS)
+-------------------------------
+
+Ver containers a correr:
+   docker ps
+
+Ver logs do container:
+   docker logs sgi-backend
+
+Parar container:
+   docker stop sgi-backend
+
+Iniciar container:
+   docker start sgi-backend
+
+Remover container:
+   docker rm sgi-backend
+
+Ver imagens:
+   docker images
+
+Remover imagem:
+   docker rmi sgi-backend:latest
+
+VANTAGENS DO PORTAINER
+----------------------
+
+- Interface web amigavel
+- Gestao facil de containers
+- Logs em tempo real
+- Configuracao visual
+- Suporte para docker-compose
+- Gestao de volumes e redes
+
+DICAS
+-----
+
+1. Usa volumes para persistir dados (uploads, reports)
+2. Configura restart policy como "Always"
+3. Monitoriza os logs regularmente
+4. Faz backup das configuracoes
+5. Usa docker-compose para facilitar gestao
+6. Configura dominio se possivel (mais seguro que IP)
+
+SEGURANCA
+---------
+
+1. Usa HTTPS se expores publicamente
+2. Configura firewall adequadamente
+3. Mantem o Docker e Portainer atualizados
+4. Usa secrets para informacoes sensiveis (se Portainer suportar)
+5. Limita acesso ao Portainer
+
+Se precisares de ajuda, avisa!
+
