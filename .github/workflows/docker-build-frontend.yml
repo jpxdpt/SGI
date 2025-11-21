@@ -105,11 +105,26 @@ jobs:
           echo "Checking .dockerignore content:"
           cat .dockerignore | head -10
 
+      - name: Prepare dashboard-sgi for build
+        run: |
+          echo "Preparing dashboard-sgi for Docker build..."
+          # Garantir que dashboard-sgi existe e tem package.json
+          if [ ! -f "dashboard-sgi/package.json" ]; then
+            echo "ERROR: dashboard-sgi/package.json not found!"
+            exit 1
+          fi
+          # Remover .git se existir
+          rm -rf dashboard-sgi/.git
+          # Verificar estrutura
+          echo "dashboard-sgi structure:"
+          ls -la dashboard-sgi/ | head -15
+          echo "✓ dashboard-sgi ready for build"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile.frontend
+          context: ./dashboard-sgi
+          file: ./dashboard-sgi/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
