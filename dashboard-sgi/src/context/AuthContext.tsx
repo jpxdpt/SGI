@@ -23,7 +23,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
+// Suportar variáveis de ambiente em runtime através de window.__ENV__
+const getApiBase = (): string | undefined => {
+  // 1. Tentar window.__ENV__ (runtime config injetada pelo Docker)
+  if (typeof window !== 'undefined' && (window as any).__ENV__?.VITE_API_BASE_URL) {
+    return (window as any).__ENV__.VITE_API_BASE_URL.replace(/\/$/, '');
+  }
+  // 2. Tentar import.meta.env (build-time config do Vite)
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
+  }
+  return undefined;
+};
+
+const API_BASE = getApiBase();
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -126,6 +139,7 @@ export const useAuth = () => {
   }
   return context;
 };
+
 
 
 

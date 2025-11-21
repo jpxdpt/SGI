@@ -14,7 +14,22 @@ import type {
 import { checkAuthError, handleTokenExpired } from '../utils/authUtils';
 
 const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
-export const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
+
+// Suportar variáveis de ambiente em runtime através de window.__ENV__
+// Isso permite configurar após o build em Docker
+const getApiBase = (): string | undefined => {
+  // 1. Tentar window.__ENV__ (runtime config injetada pelo Docker)
+  if (typeof window !== 'undefined' && (window as any).__ENV__?.VITE_API_BASE_URL) {
+    return (window as any).__ENV__.VITE_API_BASE_URL.replace(/\/$/, '');
+  }
+  // 2. Tentar import.meta.env (build-time config do Vite)
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
+  }
+  return undefined;
+};
+
+export const API_BASE = getApiBase();
 
 const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('accessToken');
@@ -1257,6 +1272,7 @@ export const deleteScheduledReport = async (id: string): Promise<void> => {
   assertApiBase();
   return deleteJSON(`/reports/scheduled/${encodeURIComponent(id)}`);
 };
+
 
 
 
