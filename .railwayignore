@@ -1,4 +1,4 @@
-dashboard-sgi
+# Railway ignore - ignorar apenas artefatos de build, não o código fonte
 node_modules
 dist
 .env
@@ -31,4 +31,11 @@ tsconfig.tsbuildinfo
 research
 scripts
 data
+
+# Dashboard SGI - ignorar apenas build artifacts
+dashboard-sgi/node_modules
+dashboard-sgi/dist
+dashboard-sgi/.vercel
+dashboard-sgi/test-results
+dashboard-sgi/playwright-report
 

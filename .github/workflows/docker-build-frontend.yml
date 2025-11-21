@@ -27,80 +27,26 @@ jobs:
           fetch-depth: 1
           submodules: false
           
-      - name: Checkout dashboard-sgi content
+      - name: Verify dashboard-sgi exists
         run: |
-          echo "Checking dashboard-sgi status..."
+          echo "Checking if dashboard-sgi directory exists..."
           if [ ! -d "dashboard-sgi" ]; then
             echo "ERROR: dashboard-sgi directory does not exist!"
             exit 1
           fi
           
-          echo "dashboard-sgi exists, checking contents..."
-          ls -la dashboard-sgi/
-          
-          echo "Checking if it has .git..."
-          if [ -d "dashboard-sgi/.git" ]; then
-            echo "dashboard-sgi has .git, it's a nested repository"
-            cd dashboard-sgi
-            
-            echo "Checking git status..."
-            git status || true
-            echo "Checking remote..."
-            git remote -v || echo "No remote configured"
-            
-            echo "Trying to checkout all files..."
-            # Tentar resetar para HEAD
-            git reset --hard HEAD || true
-            git checkout . || true
-            
-            # Se ainda estiver vazio, tentar fazer checkout de uma branch específica
-            if [ ! -f "package.json" ]; then
-              echo "Still empty, trying to checkout master/main..."
-              git checkout master 2>/dev/null || git checkout main 2>/dev/null || git checkout -b temp || true
-            fi
-            
-            # Se ainda não funcionar, tentar fazer checkout do repositório principal
-            if [ ! -f "package.json" ]; then
-              echo "Trying to get files from parent repo..."
-              cd ..
-              # Verificar se os ficheiros estão no repositório principal
-              git ls-files dashboard-sgi/ | head -10
-            else
-              cd ..
-            fi
-          fi
-          
-          echo "Verifying dashboard-sgi contents after fix:"
-          ls -la dashboard-sgi/ | head -20
-          
-          # Verificar se package.json existe
+          echo "✓ dashboard-sgi directory exists"
+          echo "Checking for package.json..."
           if [ ! -f "dashboard-sgi/package.json" ]; then
-            echo "ERROR: dashboard-sgi/package.json NOT found after all attempts!"
-            echo "This means dashboard-sgi is a separate repository that needs to be cloned separately"
-            echo "or its files need to be committed to the main repository"
+            echo "ERROR: dashboard-sgi/package.json NOT found!"
+            echo "Listing dashboard-sgi contents:"
+            ls -la dashboard-sgi/ | head -20
             exit 1
           fi
           
           echo "✓ dashboard-sgi/package.json found"
-          echo "Final verification:"
-          ls -la dashboard-sgi/ | head -15
+          echo "Dashboard structure verified successfully"
 
-      - name: Verify files exist
-        run: |
-          echo "Current directory:"
-          pwd
-          echo "Listing root:"
-          ls -la
-          echo "Checking dashboard-sgi:"
-          ls -la dashboard-sgi/ || echo "ERROR: dashboard-sgi not found"
-          echo "Checking package.json:"
-          ls -la dashboard-sgi/package.json || echo "ERROR: package.json not found"
-          echo "Checking Dockerfile.frontend:"
-          ls -la Dockerfile.frontend || echo "ERROR: Dockerfile.frontend not found"
-          echo "Tree structure:"
-          find . -maxdepth 2 -type d | head -20
-          echo "Checking .dockerignore:"
-          cat .dockerignore | grep -i dashboard || echo "dashboard-sgi not in .dockerignore"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -124,28 +70,23 @@ jobs:
 
       - name: List files before build
         run: |
-          echo "Files in root:"
-          ls -la
-          echo "Files in dashboard-sgi:"
-          ls -la dashboard-sgi/ | head -20 || echo "dashboard-sgi not found"
-          echo "Checking if dashboard-sgi is in .dockerignore:"
-          cat .dockerignore | grep dashboard || echo "dashboard-sgi NOT in .dockerignore (good)"
-          echo "Checking .dockerignore content:"
-          cat .dockerignore | head -10
+          echo "Verifying build context..."
+          echo "Dashboard-sgi package.json:"
+          cat dashboard-sgi/package.json | grep '"name"' || true
+          echo "Checking Dockerfile exists:"
+          ls -la dashboard-sgi/Dockerfile || echo "ERROR: Dockerfile not found"
 
       - name: Prepare dashboard-sgi for build
         run: |
           echo "Preparing dashboard-sgi for Docker build..."
-          # Garantir que dashboard-sgi existe e tem package.json
           if [ ! -f "dashboard-sgi/package.json" ]; then
             echo "ERROR: dashboard-sgi/package.json not found!"
             exit 1
           fi
-          # Remover .git se existir
-          rm -rf dashboard-sgi/.git
-          # Verificar estrutura
-          echo "dashboard-sgi structure:"
-          ls -la dashboard-sgi/ | head -15
+          if [ ! -f "dashboard-sgi/Dockerfile" ]; then
+            echo "ERROR: dashboard-sgi/Dockerfile not found!"
+            exit 1
+          fi
           echo "✓ dashboard-sgi ready for build"
 
       - name: Build and push Docker image

@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ui-scale: 1;
+  font-size: calc(16px * var(--ui-scale));
+  --color-bg: #f8fafc;
+  --color-foreground: #020617;
+  --color-card: #ffffff;
+  --color-border: rgba(148, 163, 184, 0.35);
+}
+
+.dark {
+  --color-bg: #020617; /* slate-950 */
+  --color-foreground: #e5e7eb; /* slate-200 */
+  --color-card: #020617; /* fundo igual ao body para sensação de “glass” com borda */
+  --color-border: rgba(148, 163, 184, 0.45);
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  @apply bg-[var(--color-bg)] text-[var(--color-foreground)] font-sans transition-colors duration-200;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+* {
+  @apply box-border;
+}
+
+/* Animações e transições */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Smooth transitions para elementos interativos */
+button, a, input, select, textarea {
+  transition: all 0.2s ease;
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    to right,
+    rgb(226 232 240) 0%,
+    rgb(241 245 249) 20%,
+    rgb(226 232 240) 40%,
+    rgb(226 232 240) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    to right,
+    rgb(30 41 59) 0%,
+    rgb(51 65 85) 20%,
+    rgb(30 41 59) 40%,
+    rgb(30 41 59) 100%
+  );
+  background-size: 1000px 100%;
+}
