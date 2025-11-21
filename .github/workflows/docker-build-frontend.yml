@@ -35,37 +35,50 @@ jobs:
             exit 1
           fi
           
-          echo "dashboard-sgi exists, checking if it has .git..."
+          echo "dashboard-sgi exists, checking contents..."
+          ls -la dashboard-sgi/
+          
+          echo "Checking if it has .git..."
           if [ -d "dashboard-sgi/.git" ]; then
             echo "dashboard-sgi has .git, it's a nested repository"
-            echo "Checking out the content..."
             cd dashboard-sgi
-            git checkout .
-            git clean -fd
-            cd ..
-            echo "Content checked out"
+            
+            echo "Checking git status..."
+            git status || true
+            echo "Checking remote..."
+            git remote -v || echo "No remote configured"
+            
+            echo "Trying to checkout all files..."
+            # Tentar resetar para HEAD
+            git reset --hard HEAD || true
+            git checkout . || true
+            
+            # Se ainda estiver vazio, tentar fazer checkout de uma branch específica
+            if [ ! -f "package.json" ]; then
+              echo "Still empty, trying to checkout master/main..."
+              git checkout master 2>/dev/null || git checkout main 2>/dev/null || git checkout -b temp || true
+            fi
+            
+            # Se ainda não funcionar, tentar fazer checkout do repositório principal
+            if [ ! -f "package.json" ]; then
+              echo "Trying to get files from parent repo..."
+              cd ..
+              # Verificar se os ficheiros estão no repositório principal
+              git ls-files dashboard-sgi/ | head -10
+            else
+              cd ..
+            fi
           fi
           
-          echo "Verifying dashboard-sgi contents:"
+          echo "Verifying dashboard-sgi contents after fix:"
           ls -la dashboard-sgi/ | head -20
           
           # Verificar se package.json existe
           if [ ! -f "dashboard-sgi/package.json" ]; then
-            echo "ERROR: dashboard-sgi/package.json NOT found!"
-            echo "Trying to get remote URL..."
-            if [ -d "dashboard-sgi/.git" ]; then
-              cd dashboard-sgi
-              git remote -v
-              echo "Trying to fetch and checkout..."
-              git fetch origin || true
-              git checkout master || git checkout main || true
-              cd ..
-            fi
-            # Verificar novamente
-            if [ ! -f "dashboard-sgi/package.json" ]; then
-              echo "ERROR: Still cannot find package.json after checkout"
-              exit 1
-            fi
+            echo "ERROR: dashboard-sgi/package.json NOT found after all attempts!"
+            echo "This means dashboard-sgi is a separate repository that needs to be cloned separately"
+            echo "or its files need to be committed to the main repository"
+            exit 1
           fi
           
           echo "✓ dashboard-sgi/package.json found"
