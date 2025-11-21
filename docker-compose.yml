@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5801:5801"
+    environment:
+      - DATABASE_URL=postgresql://neondb_owner:npg_RgD2x5QBZUMd@ep-little-band-absv82a0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - JWT_SECRET=cc02d2f9edea2fa25de385eb061da48db5a3956e42a05c834cfb194fca9f8608
+      - JWT_REFRESH_SECRET=ecc63e21c4cd7642f68bd2ad947a9953f66063d74d145622eca1b07ba5636975
+      - DEFAULT_TENANT_ID=tenant-default
+      - PORT=5801
+      - NODE_ENV=production
+      - ALLOW_ALL_ORIGINS=true
+      - BASE_PATH=/api
+    volumes:
+      - sgi-uploads:/app/uploads
+      - sgi-reports:/app/reports
+    restart: unless-stopped
+
+volumes:
+  sgi-uploads:
+  sgi-reports:
+
