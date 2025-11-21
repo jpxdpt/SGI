@@ -1,0 +1,43 @@
+# Ignorar node_modules em qualquer lugar
+**/node_modules
+node_modules
+
+# Ignorar diretórios desnecessários
+dashboard-sgi
+dist
+.env
+.env.local
+*.log
+uploads
+reports
+.git
+.gitignore
+*.md
+*.txt
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+*~
+coverage
+.nyc_output
+*.test.js
+*.spec.js
+__tests__
+__mocks__
+*.map
+.npm
+.eslintcache
+.prettierignore
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+research
+scripts
+data
+
+# Ignorar ficheiros de build
+server/dist
+server/.next
+server/build
+
