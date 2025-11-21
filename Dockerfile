@@ -1,8 +1,19 @@
 # Dockerfile para o backend SGI (na raiz do repo)
 FROM node:18-alpine
 
-# Instalar dependências do sistema necessárias para Prisma e outras libs
-RUN apk add --no-cache libc6-compat openssl python3 make g++
+# Instalar dependências do sistema necessárias para Prisma, canvas e outras libs
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pkgconfig
 
 WORKDIR /app
 
