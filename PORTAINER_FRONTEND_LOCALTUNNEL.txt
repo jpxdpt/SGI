@@ -1,0 +1,203 @@
+Deploy Frontend no Portainer + Localtunnel
+===========================================
+
+Este guia mostra como fazer deploy do frontend no Portainer e expor com localtunnel.
+
+PASSO 1: Criar Stack do Frontend no Portainer
+----------------------------------------------
+
+1. No Portainer, vai a "Stacks" -> "Add stack"
+
+2. Name: sgi-frontend
+
+3. Escolhe "Web editor"
+
+4. Cola este codigo:
+
+   version: '3.8'
+   
+   services:
+     frontend:
+       build:
+         context: https://github.com/jpxdpt/SGI.git#master
+         dockerfile: dashboard-sgi/Dockerfile
+       ports:
+         - "8080:80"
+       restart: unless-stopped
+       environment:
+         - VITE_API_BASE_URL=http://IP_DO_SERVIDOR:5801/api
+   
+   IMPORTANTE: Substitui IP_DO_SERVIDOR pelo IP interno do teu servidor ZimaOS.
+   Se o backend e frontend estao no mesmo servidor, podes usar:
+   - "backend:5801" (nome do servico do backend)
+   - Ou o IP interno do servidor
+
+5. Clica em "Deploy the stack"
+
+PASSO 2: Instalar Localtunnel no Servidor
+------------------------------------------
+
+1. Acede ao servidor ZimaOS via SSH
+
+2. Instala Node.js (se ainda nao tiveres):
+   # ZimaOS geralmente ja tem Node.js
+   node --version
+
+3. Instala localtunnel globalmente:
+   npm install -g localtunnel
+
+PASSO 3: Expor Frontend com Localtunnel
+---------------------------------------
+
+1. Certifica-te que o frontend esta a correr em localhost:8080
+
+2. Abre um terminal no servidor e executa:
+   lt --port 8080 --subdomain sgi-frontend
+   
+   OU se quiseres um subdominio customizado:
+   lt --port 8080 --subdomain teu-subdominio-frontend
+   
+   NOTA: O subdominio pode nao estar disponivel. Se der erro, tenta outro nome.
+
+3. O localtunnel vai dar-te uma URL tipo:
+   https://sgi-frontend.loca.lt
+
+4. Esta URL expoe o teu frontend na internet!
+
+PASSO 4: Manter Localtunnel a Correr
+-------------------------------------
+
+O localtunnel precisa de estar sempre a correr.
+
+Opcao A: Terminal separado
+   - Deixa o terminal aberto com localtunnel a correr
+
+Opcao B: Screen ou tmux (recomendado)
+   # Instalar screen (se nao tiveres)
+   apt-get update && apt-get install -y screen
+   
+   # Criar sessao screen
+   screen -S localtunnel-frontend
+   
+   # Executar localtunnel
+   lt --port 8080 --subdomain sgi-frontend
+   
+   # Sair da sessao (Ctrl+A depois D)
+   # Para voltar: screen -r localtunnel-frontend
+
+Opcao C: systemd service (mais profissional)
+   Cria um ficheiro /etc/systemd/system/localtunnel-frontend.service:
+   
+   [Unit]
+   Description=Localtunnel for SGI Frontend
+   After=network.target
+   
+   [Service]
+   Type=simple
+   User=root
+   ExecStart=/usr/bin/lt --port 8080 --subdomain sgi-frontend
+   Restart=always
+   RestartSec=10
+   
+   [Install]
+   WantedBy=multi-user.target
+   
+   Depois:
+   systemctl daemon-reload
+   systemctl enable localtunnel-frontend
+   systemctl start localtunnel-frontend
+
+PASSO 5: Configurar Backend para Aceitar Frontend
+--------------------------------------------------
+
+No Portainer, na stack do backend, atualiza a variavel:
+
+   FRONTEND_URL=https://sgi-frontend.loca.lt
+   
+   (Substitui pelo URL real que o localtunnel te deu)
+
+PASSO 6: Atualizar Frontend para Usar Backend
+---------------------------------------------
+
+No Portainer, na stack do frontend, atualiza a variavel:
+
+   VITE_API_BASE_URL=https://URL_DO_BACKEND/api
+   
+   Se o backend tambem esta exposto via localtunnel:
+   VITE_API_BASE_URL=https://sgi-backend.loca.lt/api
+
+ALTERNATIVA: Expor Backend Tambem com Localtunnel
+--------------------------------------------------
+
+Se o backend tambem precisa de ser exposto:
+
+1. No servidor, abre outro terminal (ou screen)
+
+2. Executa:
+   lt --port 5801 --subdomain sgi-backend
+
+3. Obtem a URL (ex: https://sgi-backend.loca.lt)
+
+4. No frontend, atualiza:
+   VITE_API_BASE_URL=https://sgi-backend.loca.lt/api
+
+5. No backend, atualiza:
+   FRONTEND_URL=https://sgi-frontend.loca.lt
+
+TROUBLESHOOTING
+---------------
+
+Problema: Localtunnel nao conecta
+Solucao: Verifica que o frontend esta a correr em localhost:8080
+         Verifica firewall do servidor
+         Tenta sem subdominio: lt --port 8080
+
+Problema: URL do localtunnel muda
+Solucao: Usa um subdominio fixo (pode nao estar disponivel)
+         Ou atualiza as variaveis sempre que a URL mudar
+
+Problema: Frontend nao conecta ao backend
+Solucao: Verifica que o backend esta exposto (se necessario)
+         Verifica CORS no backend (ALLOW_ALL_ORIGINS=true)
+         Verifica que as URLs estao corretas
+
+Problema: Localtunnel para apos algum tempo
+Solucao: Usa screen/tmux ou systemd service para manter a correr
+         Configura restart automatico
+
+VANTAGENS DO LOCALTUNNEL
+------------------------
+
+- Gratis
+- Facil de configurar
+- Subdominios customizados (se disponivel)
+- HTTPS automatico
+- Sem necessidade de abrir portas no router
+
+DESVANTAGENS
+------------
+
+- URL pode mudar (se nao usares subdominio)
+- Precisa de manter a correr
+- Limite de conexoes no plano gratuito
+- Menos estavel que servicos pagos
+
+ALTERNATIVAS
+------------
+
+1. ngrok - Similar ao localtunnel, mais estavel
+2. Cloudflare Tunnel - Gratis, mais profissional
+3. Tailscale - VPN mesh, mais seguro
+4. Servico cloud - Render, Vercel, etc.
+
+DICAS
+-----
+
+1. Usa screen ou systemd para manter localtunnel a correr
+2. Usa subdominios fixos se possivel
+3. Configura restart automatico
+4. Monitoriza os logs do localtunnel
+5. Considera usar Cloudflare Tunnel para producao
+
+Se precisares de ajuda, avisa!
+
