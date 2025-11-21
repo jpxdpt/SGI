@@ -1,0 +1,650 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GESTOR
+  AUDITOR
+}
+
+enum AuditoriaStatus {
+  PLANEADA
+  ANDAMENTO
+  EM_EXECUCAO
+  EXEC_ATRASO
+  ATRASADA
+  EXECUTADA
+}
+
+enum ActionOrigin {
+  INTERNA
+  EXTERNA
+  OCORRENCIA
+}
+
+enum ActionStatus {
+  EXECUTADA
+  EXECUTADA_ATRASO
+  ATRASADA
+  ANDAMENTO
+}
+
+enum Impact {
+  BAIXO
+  MEDIO
+  ALTO
+}
+
+enum OccurrenceSeverity {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum OccurrenceStatus {
+  ABERTA
+  EM_MITIGACAO
+  RESOLVIDA
+}
+
+enum OccurrenceType {
+  AMBIENTAL
+  SEGURANCA_TRABALHADORES
+  SEGURANCA_ALIMENTAR
+}
+
+enum Conformidade {
+  CONFORMIDADE
+  NAO_CONFORMIDADE
+}
+
+enum ImportStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  IMPORT
+}
+
+model Tenant {
+  id                String                @id @default(uuid())
+  name              String
+  domain            String?               @unique
+  users             User[]
+  internalAudits    InternalAudit[]
+  externalAudits    ExternalAudit[]
+  actionItems       ActionItem[]
+  occurrences       Occurrence[]
+  sectors           Sector[]
+  importLogs        ImportLog[]
+  auditTrails       AuditTrail[]
+  attachments       Attachment[]
+  comments          Comment[]
+  approvals         Approval[]
+  workflowDefinitions WorkflowDefinition[]
+  workflowInstances   WorkflowInstance[]
+  documents         Document[]
+  documentVersions  DocumentVersion[]
+  documentTags      DocumentTag[]
+  reportTemplates   ReportTemplate[]
+  scheduledReports  ScheduledReport[]
+  notifications     Notification[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+}
+
+model User {
+  id                      String                @id @default(uuid())
+  tenantId                String
+  tenant                  Tenant                @relation(fields: [tenantId], references: [id])
+  name                    String
+  email                   String                @unique
+  passwordHash            String
+  role                    Role
+  auditTrails             AuditTrail[]
+  attachments             Attachment[]
+  comments                Comment[]
+  approvalRequests        Approval[]            @relation("ApprovalRequester")
+  approvalApprovals       Approval[]            @relation("ApprovalApprover")
+  workflowInstances       WorkflowInstance[]    @relation("WorkflowStarter")
+  workflowCancelled       WorkflowInstance[]    @relation("WorkflowCanceller")
+  workflowStepExecutions  WorkflowStepExecution[]
+  sessions                Session[]
+  createdDocuments        Document[]            @relation("DocumentCreator")
+  updatedDocumentVersions DocumentVersion[]
+  createdReportTemplates  ReportTemplate[]      @relation("ReportCreator")
+  createdScheduledReports ScheduledReport[]     @relation("ScheduledReportCreator")
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  notifications           Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InternalAudit {
+  id                    String          @id @default(uuid())
+  tenantId              String
+  tenant                Tenant          @relation(fields: [tenantId], references: [id])
+  ano                   Int
+  entidadeAuditora      String?
+  iso                   String?
+  inicio                DateTime?
+  termino               DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+}
+
+model ExternalAudit {
+  id                    String          @id @default(uuid())
+  tenantId              String
+  tenant                Tenant          @relation(fields: [tenantId], references: [id])
+  ano                   Int
+  entidadeAuditora      String
+  iso                   String?
+  inicio                DateTime?
+  termino               DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+}
+
+model ActionItem {
+  id                    String       @id @default(uuid())
+  tenantId              String
+  tenant                Tenant       @relation(fields: [tenantId], references: [id])
+  origem                ActionOrigin
+  acaoRelacionada       String
+  conformidade          Conformidade?
+  numeroAssociado       String?
+  ambito                String?
+  descricao             String       @db.Text
+  causaRaizIdentificada String?      @db.Text
+  acaoCorretiva         String?      @db.Text
+  local                 String?
+  responsavel           String?
+  inicio                DateTime?
+  termino               DateTime?
+  conclusao             DateTime?
+  status                ActionStatus
+  mes                   String?
+  evidencia             String?      @db.Text
+  avaliacaoEficacia     String?      @db.Text
+  setor                 String
+  dataAbertura          DateTime
+  dataLimite            DateTime
+  dataConclusao         DateTime?
+  impacto               Impact
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+model Occurrence {
+  id              String            @id @default(uuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  tipo            OccurrenceType
+  setor           String            // Mantido para compatibilidade, mas departamentosAtingidos será usado
+  departamentosAtingidos Json       @default("[]") // Array de strings com IDs ou nomes dos departamentos
+  responsavel     String
+  data            DateTime
+  descricao       String            @db.Text
+  resolucao       String?           @db.Text
+  gravidade       OccurrenceSeverity
+  acaoGerada      String?
+  status          OccurrenceStatus
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Sector {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  nome        String
+  responsavel String
+  email       String?
+  telefone    String?
+  descricao   String?
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ImportLog {
+  id           String       @id @default(uuid())
+  tenantId     String
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  fileName     String
+  mode         String
+  entity       String
+  status       ImportStatus
+  totalRecords Int
+  createdAt    DateTime     @default(now())
+  finishedAt   DateTime?
+  errorMessage String?
+}
+
+model AuditTrail {
+  id          String      @id @default(uuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
+  action      AuditAction
+  entity      String
+  entityId    String?
+  description String
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum WorkflowStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum WorkflowStepType {
+  APPROVAL
+  NOTIFICATION
+  CONDITION
+}
+
+model Attachment {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  entityType  String   // "InternalAudit", "ExternalAudit", "ActionItem", "Occurrence"
+  entityId    String
+  fileName    String
+  originalName String
+  mimeType    String
+  size        Int      // em bytes
+  path        String   // caminho do ficheiro no servidor
+  uploadedBy  String?
+  user        User?    @relation(fields: [uploadedBy], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@map("attachments")
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  entityType  String   // "InternalAudit", "ExternalAudit", "ActionItem", "Occurrence"
+  entityId    String
+  content     String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@map("comments")
+}
+
+model Approval {
+  id          String         @id @default(uuid())
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  entityType  String
+  entityId    String
+  status      ApprovalStatus @default(PENDING)
+  requestedBy String
+  requester   User           @relation("ApprovalRequester", fields: [requestedBy], references: [id])
+  approvedBy  String?
+  approver    User?          @relation("ApprovalApprover", fields: [approvedBy], references: [id])
+  comments    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  approvedAt  DateTime?
+
+  @@index([entityType, entityId])
+  @@map("approvals")
+}
+
+model WorkflowDefinition {
+  id          String               @id @default(uuid())
+  tenantId    String
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+  entityType  String               // "InternalAudit", "ExternalAudit", "ActionItem", "Occurrence", "Document"
+  isActive    Boolean              @default(true)
+  steps       WorkflowStep[]
+  instances   WorkflowInstance[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([tenantId, entityType, isActive])
+  @@map("workflow_definitions")
+}
+
+model WorkflowStep {
+  id                  String             @id @default(uuid())
+  workflowDefinitionId String
+  workflowDefinition   WorkflowDefinition @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
+  stepOrder           Int                // Ordem do passo (1, 2, 3...)
+  stepType            WorkflowStepType   // APPROVAL, NOTIFICATION, CONDITION
+  name                String
+  description         String?
+  requiredRoles       Json               @default("[]") // Roles que podem executar este passo (array de Role como strings)
+  requiredUsers       Json               @default("[]") // IDs específicos de utilizadores (array de strings)
+  conditionExpression Json?              // Expressão condicional (opcional)
+  notificationTemplate String?           // Template de notificação
+  autoAdvance         Boolean            @default(false) // Avançar automaticamente se condições forem atendidas
+  timeoutDays         Int?               // Timeout em dias (opcional)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([workflowDefinitionId, stepOrder])
+  @@map("workflow_steps")
+}
+
+model WorkflowInstance {
+  id                    String                @id @default(uuid())
+  tenantId              String
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id])
+  workflowDefinitionId  String
+  workflowDefinition    WorkflowDefinition    @relation(fields: [workflowDefinitionId], references: [id])
+  entityType            String
+  entityId              String
+  status                WorkflowStatus         @default(DRAFT)
+  startedBy             String
+  startedByUser         User                   @relation("WorkflowStarter", fields: [startedBy], references: [id])
+  currentStepOrder      Int?                   // Passo atual em execução
+  completedAt           DateTime?
+  cancelledAt           DateTime?
+  cancelledBy           String?
+  cancelledByUser       User?                  @relation("WorkflowCanceller", fields: [cancelledBy], references: [id])
+  stepExecutions        WorkflowStepExecution[]
+  documents             Document[]             @relation("DocumentWorkflow")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([tenantId, entityType, entityId])
+  @@index([status, currentStepOrder])
+  @@map("workflow_instances")
+}
+
+model WorkflowStepExecution {
+  id                String            @id @default(uuid())
+  workflowInstanceId String
+  workflowInstance   WorkflowInstance @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  stepOrder         Int
+  stepType          WorkflowStepType
+  status            WorkflowStatus    @default(PENDING_APPROVAL)
+  executedBy        String?
+  executedByUser    User?             @relation(fields: [executedBy], references: [id])
+  comments          String?
+  executedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([workflowInstanceId, stepOrder])
+  @@map("workflow_step_executions")
+}
+
+enum SessionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+model Session {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String       @unique
+  status       SessionStatus @default(ACTIVE)
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([userId, status])
+  @@index([refreshToken])
+  @@map("sessions")
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum DocumentAccessLevel {
+  PRIVATE
+  INTERNAL
+  PUBLIC
+}
+
+model Document {
+  id              String            @id @default(uuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  title           String
+  description     String?
+  category        String?           // Categoria do documento (ex: "Auditoria", "Relatório", "Procedimento")
+  status          DocumentStatus    @default(DRAFT)
+  accessLevel     DocumentAccessLevel @default(INTERNAL)
+  currentVersion  Int               @default(1)
+  createdBy       String
+  creator         User              @relation("DocumentCreator", fields: [createdBy], references: [id])
+  versions        DocumentVersion[]
+  tags            DocumentTag[]
+  workflowInstanceId String?        // Relacionamento opcional com workflow
+  workflowInstance   WorkflowInstance? @relation("DocumentWorkflow", fields: [workflowInstanceId], references: [id])
+  allowedRoles    Json              @default("[]") // Roles que podem aceder (array de Role como strings)
+  allowedUsers    Json              @default("[]") // IDs específicos de utilizadores (array de strings)
+  metadata        Json?             // Metadados adicionais (JSON livre)
+  archivedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+  @@index([tenantId, createdAt])
+  @@index([workflowInstanceId])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id              String            @id @default(uuid())
+  documentId      String
+  document        Document          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  version         Int               // Número da versão (1, 2, 3...)
+  fileName        String
+  originalName    String
+  mimeType        String
+  size            Int               // em bytes
+  path            String            // caminho do ficheiro no servidor
+  checksum        String?           // Hash MD5/SHA256 para verificar integridade
+  changeNotes     String?           // Notas sobre as alterações nesta versão
+  uploadedBy      String
+  uploader        User              @relation(fields: [uploadedBy], references: [id])
+  isCurrent       Boolean           @default(false) // Versão atual
+  createdAt       DateTime          @default(now())
+
+  @@unique([documentId, version])
+  @@index([documentId, isCurrent])
+  @@index([tenantId])
+  @@map("document_versions")
+}
+
+model DocumentTag {
+  id          String      @id @default(uuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  documentId  String
+  document    Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  name        String      // Nome da tag (ex: "ISO 9001", "Conformidade", "Urgente")
+  color       String?     // Cor da tag (opcional, para UI)
+  createdAt   DateTime    @default(now())
+
+  @@index([documentId])
+  @@index([tenantId, name])
+  @@map("document_tags")
+}
+
+enum ReportType {
+  AUDIT_INTERNAL
+  AUDIT_EXTERNAL
+  ACTIONS
+  OCCURRENCES
+  CONSOLIDATED
+  CUSTOM
+}
+
+enum ReportFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  ON_DEMAND
+}
+
+enum ReportStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ReportComponentType {
+  KPI
+  TABLE
+  CHART_BAR
+  CHART_LINE
+  CHART_PIE
+  CHART_AREA
+  TEXT
+  IMAGE
+}
+
+model ReportTemplate {
+  id              String            @id @default(uuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  name            String
+  description     String?
+  reportType      ReportType
+  status          ReportStatus      @default(DRAFT)
+  isPublic        Boolean           @default(false) // Templates públicos podem ser usados por todos
+  createdBy       String
+  creator         User              @relation("ReportCreator", fields: [createdBy], references: [id])
+  components      ReportComponent[]
+  instances       ScheduledReport[]
+  metadata        Json?             // Configurações adicionais (filtros, formatação, etc.)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([tenantId, reportType, status])
+  @@index([isPublic, reportType])
+  @@map("report_templates")
+}
+
+model ReportComponent {
+  id                String              @id @default(uuid())
+  reportTemplateId  String
+  reportTemplate    ReportTemplate      @relation(fields: [reportTemplateId], references: [id], onDelete: Cascade)
+  componentType     ReportComponentType
+  order             Int                 // Ordem de exibição
+  title             String?
+  configuration     Json                // Configuração específica do componente (colunas, métricas, etc.)
+  dataSource        Json?               // Fonte de dados (query, endpoint, etc.)
+  style             Json?               // Estilos customizados
+  createdAt         DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([reportTemplateId, order])
+  @@map("report_components")
+}
+
+model ScheduledReport {
+  id              String            @id @default(uuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  reportTemplateId String
+  reportTemplate  ReportTemplate    @relation(fields: [reportTemplateId], references: [id])
+  name            String
+  description     String?
+  frequency       ReportFrequency
+  schedule        String            // Cron expression ou configuração JSON
+  recipients      Json              @default("[]") // Array de emails
+  format          Json              @default("[\"PDF\"]") // Array de formatos: ["PDF", "EXCEL", "CSV"]
+  filters         Json?             // Filtros específicos para este agendamento
+  status          ReportStatus      @default(ACTIVE)
+  enabled         Boolean           @default(true)
+  lastRunAt       DateTime?
+  nextRunAt       DateTime?
+  createdBy       String
+  creator         User              @relation("ScheduledReportCreator", fields: [createdBy], references: [id])
+  executions      ReportExecution[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([tenantId, enabled, nextRunAt])
+  @@index([reportTemplateId])
+  @@map("scheduled_reports")
+}
+
+model ReportExecution {
+  id                String            @id @default(uuid())
+  scheduledReportId String
+  scheduledReport   ScheduledReport   @relation(fields: [scheduledReportId], references: [id], onDelete: Cascade)
+  status            String            // "SUCCESS", "FAILED", "PENDING"
+  errorMessage      String?
+  filePath          String?           // Caminho do ficheiro gerado (se sucesso)
+  fileSize          Int?              // Tamanho do ficheiro em bytes
+  startedAt         DateTime          @default(now())
+  completedAt       DateTime?
+  metadata          Json?             // Dados adicionais da execução
+
+  @@index([scheduledReportId, startedAt])
+  @@map("report_executions")
+}
+

@@ -1,0 +1,45 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const auth_1 = require("../middleware/auth");
+describe('JWT Middleware', () => {
+    const mockUser = {
+        userId: 'test-user-id',
+        email: 'test@test.local',
+        role: 'ADMIN',
+        tenantId: 'test-tenant-id',
+    };
+    describe('generateAccessToken e verifyAccessToken', () => {
+        it('deve gerar e verificar token de acesso válido', () => {
+            const token = (0, auth_1.generateAccessToken)(mockUser.userId, mockUser.email, mockUser.role, mockUser.tenantId);
+            expect(token).toBeDefined();
+            expect(typeof token).toBe('string');
+            const payload = (0, auth_1.verifyAccessToken)(token);
+            expect(payload).not.toBeNull();
+            expect(payload?.userId).toBe(mockUser.userId);
+            expect(payload?.email).toBe(mockUser.email);
+            expect(payload?.role).toBe(mockUser.role);
+            expect(payload?.tenantId).toBe(mockUser.tenantId);
+        });
+        it('deve retornar null para token inválido', () => {
+            const payload = (0, auth_1.verifyAccessToken)('invalid-token');
+            expect(payload).toBeNull();
+        });
+    });
+    describe('generateRefreshToken e verifyRefreshToken', () => {
+        it('deve gerar e verificar refresh token válido', () => {
+            const token = (0, auth_1.generateRefreshToken)(mockUser.userId, mockUser.email, mockUser.role, mockUser.tenantId);
+            expect(token).toBeDefined();
+            expect(typeof token).toBe('string');
+            const payload = (0, auth_1.verifyRefreshToken)(token);
+            expect(payload).not.toBeNull();
+            expect(payload?.userId).toBe(mockUser.userId);
+            expect(payload?.email).toBe(mockUser.email);
+            expect(payload?.role).toBe(mockUser.role);
+            expect(payload?.tenantId).toBe(mockUser.tenantId);
+        });
+        it('deve retornar null para refresh token inválido', () => {
+            const payload = (0, auth_1.verifyRefreshToken)('invalid-token');
+            expect(payload).toBeNull();
+        });
+    });
+});
