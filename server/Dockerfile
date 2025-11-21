@@ -12,7 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
-# Instalar dependências (incluindo devDependencies para compilar)
+# Instalar dependências (incluindo devDependencies para ts-node)
 RUN npm ci
 
 # Gerar Prisma Client
@@ -23,21 +23,11 @@ COPY src ./src
 COPY tsconfig.json ./
 COPY api ./api
 
-# Compilar TypeScript
-RUN npx tsc
-
-# Verificar se a compilação funcionou
-RUN ls -la dist/ || echo "Dist directory not found"
-RUN ls -la dist/server.js || echo "server.js not found in dist"
-
-# Remover devDependencies após compilar (opcional, para reduzir tamanho)
-RUN npm prune --production
-
 # Expor porta
 EXPOSE 5801
 
 # Variável de ambiente
 ENV NODE_ENV=production
 
-# Comando para iniciar (usar JavaScript compilado)
-CMD ["node", "dist/server.js"]
+# Comando para iniciar (usar ts-node diretamente - mais simples e confiável)
+CMD ["npx", "ts-node", "--transpile-only", "src/server.ts"]
