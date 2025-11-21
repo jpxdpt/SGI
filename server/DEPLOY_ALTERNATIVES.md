@@ -1,22 +1,22 @@
 # Alternativas de Deploy - SGI Backend
 
-## 🚀 Opção 1: Railway.app (RECOMENDADO - Mais Simples)
+## Opcao 1: Railway.app (RECOMENDADO - Mais Simples)
 
-Railway é a opção mais simples e tem excelente suporte para Node.js/Express.
+Railway e a opcao mais simples e tem excelente suporte para Node.js/Express.
 
 ### Passos:
 
 1. **Criar conta no Railway**:
    - Vai a https://railway.app
-   - Cria conta (pode usar GitHub)
+   - Cria conta (podes usar GitHub)
 
 2. **Criar novo projeto**:
    - Clica em "New Project"
    - Escolhe "Deploy from GitHub repo" (recomendado) ou "Empty Project"
 
-3. **Configurar variáveis de ambiente**:
+3. **Configurar variaveis de ambiente**:
    - Vai a "Variables" no projeto
-   - Adiciona todas as variáveis do `.env`:
+   - Adiciona todas as variaveis do `.env`:
      ```
      DATABASE_URL=postgresql://...
      JWT_SECRET=...
@@ -28,26 +28,26 @@ Railway é a opção mais simples e tem excelente suporte para Node.js/Express.
 
 4. **Deploy**:
    - Se usaste GitHub: Railway detecta automaticamente e faz deploy
-   - Se usaste Empty Project: faz upload do código ou conecta GitHub repo
+   - Se usaste Empty Project: faz upload do codigo ou conecta GitHub repo
 
-5. **Configurar domínio**:
-   - Railway dá-te uma URL automática (ex: `backend.up.railway.app`)
-   - Podes configurar domínio customizado se quiseres
+5. **Configurar dominio**:
+   - Railway da-te uma URL automatica (ex: `backend.up.railway.app`)
+   - Podes configurar dominio customizado se quiseres
 
 ### Vantagens:
-- ✅ Muito simples de configurar
-- ✅ Suporte nativo para Node.js
-- ✅ CORS funciona perfeitamente
-- ✅ Plano gratuito generoso
-- ✅ Deploy automático do GitHub
+- Muito simples de configurar
+- Suporte nativo para Node.js
+- CORS funciona perfeitamente
+- Plano gratuito generoso
+- Deploy automatico do GitHub
 
 ---
 
-## 🐳 Opção 2: Docker + ngrok (Para testes locais)
+## Opcao 2: Docker + ngrok (Para testes locais)
 
 ### Passos:
 
-1. **Criar Dockerfile** (já criado em `server/Dockerfile`)
+1. **Criar Dockerfile** (ja criado em `server/Dockerfile`)
 
 2. **Construir imagem**:
    ```bash
@@ -83,19 +83,19 @@ Railway é a opção mais simples e tem excelente suporte para Node.js/Express.
    ```
 
 7. **Usar URL do ngrok** no frontend:
-   - O ngrok dá-te uma URL tipo: `https://abc123.ngrok.io`
+   - O ngrok da-te uma URL tipo: `https://abc123.ngrok.io`
    - Configura no frontend: `VITE_API_BASE_URL=https://abc123.ngrok.io/api`
 
 ### Desvantagens:
-- ❌ URL muda a cada reinício (plano gratuito)
-- ❌ Limite de conexões no plano gratuito
-- ❌ Precisa de manter o computador ligado
+- URL muda a cada reinicio (plano gratuito)
+- Limite de conexoes no plano gratuito
+- Precisa de manter o computador ligado
 
 ---
 
-## 🌐 Opção 3: Render.com (Alternativa ao Railway)
+## Opcao 3: Render.com (Alternativa ao Railway)
 
-Similar ao Railway, mas com algumas diferenças.
+Similar ao Railway, mas com algumas diferencas.
 
 ### Passos:
 
@@ -110,31 +110,30 @@ Similar ao Railway, mas com algumas diferenças.
    - Start Command: `npm run dev` ou `npm start`
    - Environment: `Node`
 
-4. **Variáveis de ambiente**: Adiciona todas as do `.env`
+4. **Variaveis de ambiente**: Adiciona todas as do `.env`
 
-5. **Deploy**: Render faz deploy automático
+5. **Deploy**: Render faz deploy automatico
 
 ### Vantagens:
-- ✅ Simples como Railway
-- ✅ Plano gratuito disponível
-- ✅ CORS funciona bem
+- Simples como Railway
+- Plano gratuito disponivel
+- CORS funciona bem
 
 ---
 
-## 📊 Comparação Rápida
+## Comparacao Rapida
 
-| Plataforma | Simplicidade | CORS | Custo | Recomendação |
+| Plataforma | Simplicidade | CORS | Custo | Recomendacao |
 |------------|--------------|------|-------|--------------|
-| **Railway** | ⭐⭐⭐⭐⭐ | ✅ | Grátis | 🏆 MELHOR |
-| **Render** | ⭐⭐⭐⭐ | ✅ | Grátis | ✅ Muito bom |
-| **Docker+ngrok** | ⭐⭐ | ✅ | Grátis | ⚠️ Só para testes |
-| **Vercel** | ⭐⭐⭐ | ❌ | Grátis | ❌ Problemas CORS |
+| **Railway** | 5/5 | Sim | Gratis | MELHOR |
+| **Render** | 4/5 | Sim | Gratis | Muito bom |
+| **Docker+ngrok** | 2/5 | Sim | Gratis | So para testes |
+| **Vercel** | 3/5 | Nao | Gratis | Problemas CORS |
 
 ---
 
-## 🎯 Recomendação Final
+## Recomendacao Final
 
-**Use Railway.app** - É a opção mais simples, funciona perfeitamente com CORS, e tem um plano gratuito generoso. O deploy é quase automático e não terás problemas de CORS.
+**Use Railway.app** - E a opcao mais simples, funciona perfeitamente com CORS, e tem um plano gratuito generoso. O deploy e quase automatico e nao teras problemas de CORS.
 
 Se precisares de ajuda com Railway, avisa!
-

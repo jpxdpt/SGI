@@ -1,13 +1,13 @@
-# 🚀 Deploy no Railway.app - Guia Completo
+# Deploy no Railway.app - Guia Completo
 
-Railway é a forma mais simples de fazer deploy do backend sem problemas de CORS!
+Railway e a forma mais simples de fazer deploy do backend sem problemas de CORS!
 
-## 📋 Pré-requisitos
+## Pre-requisitos
 
-- Conta GitHub (para conectar o repositório)
+- Conta GitHub (para conectar o repositorio)
 - Conta Railway (podes criar com GitHub): https://railway.app
 
-## 🎯 Passo a Passo
+## Passo a Passo
 
 ### 1. Criar conta no Railway
 
@@ -20,18 +20,18 @@ Railway é a forma mais simples de fazer deploy do backend sem problemas de CORS
 
 1. No dashboard do Railway, clica em **"New Project"**
 2. Escolhe **"Deploy from GitHub repo"**
-3. Seleciona o repositório: `jpxdpt/SGI`
-4. Railway vai detectar automaticamente que é um projeto Node.js
+3. Seleciona o repositorio: `jpxdpt/SGI`
+4. Railway vai detectar automaticamente que e um projeto Node.js
 
 ### 3. Configurar o projeto
 
-1. Railway vai criar um serviço automaticamente
-2. Clica no serviço criado
+1. Railway vai criar um servico automaticamente
+2. Clica no servico criado
 3. Vai ao separador **"Settings"**
 
-### 4. Configurar variáveis de ambiente
+### 4. Configurar variaveis de ambiente
 
-No separador **"Variables"**, adiciona estas variáveis:
+No separador **"Variables"**, adiciona estas variaveis:
 
 ```
 DATABASE_URL=postgresql://neondb_owner:npg_RgD2x5QBZUMd@ep-little-band-absv82a0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
@@ -46,62 +46,61 @@ NODE_ENV=production
 
 ### 5. Configurar build e start
 
-No separador **"Settings"** → **"Deploy"**:
+No separador **"Settings"** -> **"Deploy"**:
 
 - **Build Command**: `npm install && npx prisma generate`
 - **Start Command**: `npm run dev` (ou `npm start` se tiveres configurado)
 
-### 6. Deploy automático
+### 6. Deploy automatico
 
 Railway vai fazer deploy automaticamente quando:
 - Fizeres push para o GitHub
-- Adicionares/modificares variáveis de ambiente
-- Fizeres alterações no código
+- Adicionares/modificares variaveis de ambiente
+- Fizeres alteracoes no codigo
 
 ### 7. Obter URL do backend
 
-1. No separador **"Settings"** → **"Networking"**
-2. Railway dá-te uma URL automática tipo: `backend-production.up.railway.app`
+1. No separador **"Settings"** -> **"Networking"**
+2. Railway da-te uma URL automatica tipo: `backend-production.up.railway.app`
 3. **Copia esta URL!**
 
 ### 8. Configurar frontend
 
-No frontend (Vercel), atualiza a variável de ambiente:
+No frontend (Vercel), atualiza a variavel de ambiente:
 
 ```
 VITE_API_BASE_URL=https://backend-production.up.railway.app/api
 ```
 
-## ✅ Vantagens do Railway
+## Vantagens do Railway
 
-- ✅ **Sem problemas de CORS** - Funciona perfeitamente
-- ✅ **Deploy automático** - Cada push no GitHub faz deploy
-- ✅ **URL estável** - Não muda como ngrok
-- ✅ **Plano gratuito generoso** - $5 grátis por mês
-- ✅ **Muito simples** - Não precisa de Docker ou configuração complexa
-- ✅ **Logs em tempo real** - Vês os logs no dashboard
+- Sem problemas de CORS - Funciona perfeitamente
+- Deploy automatico - Cada push no GitHub faz deploy
+- URL estavel - Nao muda como ngrok
+- Plano gratuito generoso - $5 gratis por mes
+- Muito simples - Nao precisa de Docker ou configuracao complexa
+- Logs em tempo real - Ves os logs no dashboard
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Se o deploy falhar:
 
-1. Verifica os **logs** no Railway (separador "Deployments" → clica no deployment)
-2. Verifica se todas as **variáveis de ambiente** estão corretas
-3. Verifica se o **DATABASE_URL** está correto
+1. Verifica os **logs** no Railway (separador "Deployments" -> clica no deployment)
+2. Verifica se todas as **variaveis de ambiente** estao corretas
+3. Verifica se o **DATABASE_URL** esta correto
 
-### Se o backend não iniciar:
+### Se o backend nao iniciar:
 
 1. Verifica os logs
-2. Confirma que o **PORT** está configurado (Railway define automaticamente, mas podes usar `PORT` ou `$PORT`)
-3. Verifica se o **Start Command** está correto
+2. Confirma que o **PORT** esta configurado (Railway define automaticamente, mas podes usar `PORT` ou `$PORT`)
+3. Verifica se o **Start Command** esta correto
 
-## 📊 Monitorização
+## Monitorizacao
 
-- **Logs**: Vês em tempo real no dashboard
-- **Métricas**: CPU, RAM, etc. no separador "Metrics"
-- **Deployments**: Histórico de todos os deploys
+- **Logs**: Ves em tempo real no dashboard
+- **Metricas**: CPU, RAM, etc. no separador "Metrics"
+- **Deployments**: Historico de todos os deploys
 
-## 🎉 Pronto!
+## Pronto!
 
 Depois de configurar, o Railway faz deploy automaticamente sempre que fizeres push para o GitHub!
-
