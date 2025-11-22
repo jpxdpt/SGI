@@ -10,3 +10,15 @@ cmds = ["npx prisma generate"]
 [start]
 cmd = "npm run dev"
 
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "nodePackages.npm"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npx prisma generate"]
+
+[start]
+cmd = "npm run dev"
+
