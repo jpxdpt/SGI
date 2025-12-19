@@ -69,6 +69,13 @@ export async function createInternalAudit(data: any): Promise<any> {
     });
 }
 
+export async function createExternalAudit(data: any): Promise<any> {
+    return await apiRequest('/audits/external', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
 export async function updateInternalAudit(id: string, data: any): Promise<any> {
     return await apiRequest(`/audits/internal/${id}`, {
         method: 'PUT',
@@ -80,5 +87,17 @@ export async function updateExternalAudit(id: string, data: any): Promise<any> {
     return await apiRequest(`/audits/external/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
+    });
+}
+
+export async function deleteInternalAudit(id: string): Promise<any> {
+    return await apiRequest(`/audits/internal/${id}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function deleteExternalAudit(id: string): Promise<any> {
+    return await apiRequest(`/audits/external/${id}`, {
+        method: 'DELETE',
     });
 }
