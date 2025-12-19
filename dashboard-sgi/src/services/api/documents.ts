@@ -15,6 +15,20 @@ export interface Document {
     updatedAt: string;
 }
 
+export interface DocumentTag {
+    id: string;
+    name: string;
+    color?: string;
+}
+
+export interface DocumentReadConfirmation {
+    id: string;
+    documentId: string;
+    userId: string;
+    confirmedAt: string;
+    user?: any;
+}
+
 export async function fetchDocuments(params?: any): Promise<any> {
     if (!API_BASE) return { data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } };
     const query = new URLSearchParams(params).toString();

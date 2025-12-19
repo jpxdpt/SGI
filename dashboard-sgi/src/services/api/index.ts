@@ -6,6 +6,28 @@ export * from './sectors';
 export * from './documents';
 export * from './logs';
 export * from './analytics';
+export * from './comments';
+export * from './rootCause';
+export * from './auditPrograms';
+export * from './workflows';
+export * from './reports';
+
+// Approvals placeholders
+export async function fetchApprovals(): Promise<any[]> {
+    const { apiRequest, API_BASE } = await import('./base');
+    if (!API_BASE) return [];
+    return await apiRequest('/approvals');
+}
+
+export async function approveItem(id: string, comment?: string): Promise<any> {
+    const { apiRequest } = await import('./base');
+    return await apiRequest(`/approvals/${id}/approve`, { method: 'POST', body: JSON.stringify({ comment }) });
+}
+
+export async function rejectItem(id: string, comment?: string): Promise<any> {
+    const { apiRequest } = await import('./base');
+    return await apiRequest(`/approvals/${id}/reject`, { method: 'POST', body: JSON.stringify({ comment }) });
+}
 
 export async function fetchDashboardSummary(): Promise<any> {
     const { apiRequest, API_BASE } = await import('./base');
