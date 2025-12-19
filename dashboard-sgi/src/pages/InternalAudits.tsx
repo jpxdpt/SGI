@@ -33,8 +33,42 @@ import { EntityDetailsModal } from '../components/EntityDetailsModal';
 type FormData = z.infer<typeof internalAuditSchema>;
 
 export const InternalAuditsPage = () => {
+  const mockAudits: InternalAudit[] = [
+    {
+      id: 'INT-2025-001',
+      ano: 2025,
+      entidadeAuditora: 'Equipa Interna',
+      iso: 'ISO 9001',
+      inicio: '2025-02-01',
+      termino: '2025-02-05',
+      setor: 'Qualidade',
+      responsavel: 'Maria Auditora',
+      descricao: 'Auditoria interna de processos core.',
+      status: 'PLANEADA',
+    },
+    {
+      id: 'INT-2025-002',
+      ano: 2025,
+      entidadeAuditora: 'Equipa Interna',
+      iso: 'ISO 14001',
+      inicio: '2025-03-10',
+      termino: '2025-03-12',
+      setor: 'Ambiente',
+      responsavel: 'João Silva',
+      descricao: 'Avaliação de conformidade ambiental.',
+      status: 'EXECUTADA',
+    },
+  ];
+
   const queryClient = useQueryClient();
-  const { data = [], isLoading } = useQuery<InternalAudit[]>({ queryKey: ['audits', 'internal'], queryFn: () => fetchInternalAudits() });
+  const { data = [], isLoading } = useQuery<InternalAudit[]>({
+    queryKey: ['audits', 'internal'],
+    queryFn: async () => {
+      const result = await fetchInternalAudits();
+      console.log('[InternalAuditsPage] fetched', result);
+      return result;
+    },
+  });
   const { data: allActions = [] } = useQuery<ActionItem[]>({ queryKey: ['actions'], queryFn: () => fetchActionItems() });
   const { showToast } = useToast();
   const [filters, setFilters] = useState({ ano: 'Todos' });
@@ -281,10 +315,12 @@ export const InternalAuditsPage = () => {
     }
   };
 
-  const anos = useMemo(() => Array.from(new Set(data.map((audit) => audit.ano.toString()))), [data]);
+  const displayAudits = data.length ? data : mockAudits;
+
+  const anos = useMemo(() => Array.from(new Set(displayAudits.map((audit) => audit.ano.toString()))), [displayAudits]);
 
   const filtered = useMemo(() => {
-    const filteredData = data.filter((audit) => {
+    const filteredData = displayAudits.filter((audit) => {
       const byAno = filters.ano === 'Todos' || audit.ano.toString() === filters.ano;
       return byAno;
     });

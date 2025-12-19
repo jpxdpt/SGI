@@ -13,3 +13,9 @@ UPDATE "Occurrence" SET "departamentosAtingidos" = jsonb_build_array("setor") WH
 ALTER TABLE "Occurrence" ALTER COLUMN "tipo" DROP DEFAULT;
 
 
+
+
+
+
+
+

@@ -112,12 +112,16 @@ const occurrenceTypeToDb: Record<Occurrence['tipo'], DbOccurrenceType> = {
   Ambiental: 'AMBIENTAL',
   'Segurança dos Trabalhadores': 'SEGURANCA_TRABALHADORES',
   'Segurança Alimentar': 'SEGURANCA_ALIMENTAR',
+  Reclamação: 'RECLAMACAO',
+  Sugestão: 'SUGESTAO',
 };
 
 const occurrenceTypeFromDb: Record<DbOccurrenceType, Occurrence['tipo']> = {
   AMBIENTAL: 'Ambiental',
   SEGURANCA_TRABALHADORES: 'Segurança dos Trabalhadores',
   SEGURANCA_ALIMENTAR: 'Segurança Alimentar',
+  RECLAMACAO: 'Reclamação',
+  SUGESTAO: 'Sugestão',
 };
 
 const conformidadeToDb: Record<Conformidade, DbConformidade> = {

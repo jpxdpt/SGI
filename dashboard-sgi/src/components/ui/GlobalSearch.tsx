@@ -19,6 +19,8 @@ interface SearchResult {
 }
 
 const useGlobalSearch = (query: string) => {
+  const safeLower = (value?: string | null) => (typeof value === 'string' ? value.toLowerCase() : '');
+
   const internalAuditsQuery = useQuery({ queryKey: ['audits', 'internal'], queryFn: () => fetchInternalAudits() });
   const externalAuditsQuery = useQuery({ queryKey: ['audits', 'external'], queryFn: () => fetchExternalAudits() });
   const actionsQuery = useQuery({ queryKey: ['actions'], queryFn: () => fetchActionItems() });
@@ -32,17 +34,17 @@ const useGlobalSearch = (query: string) => {
     // Buscar em auditorias internas
     (internalAuditsQuery.data ?? []).forEach((audit) => {
       const match =
-        audit.id.toLowerCase().includes(lowerQuery) ||
-        audit.setor.toLowerCase().includes(lowerQuery) ||
-        audit.responsavel.toLowerCase().includes(lowerQuery) ||
-        audit.descricao?.toLowerCase().includes(lowerQuery);
+        safeLower(audit.id).includes(lowerQuery) ||
+        safeLower((audit as any).setor).includes(lowerQuery) ||
+        safeLower((audit as any).responsavel).includes(lowerQuery) ||
+        safeLower((audit as any).descricao).includes(lowerQuery);
 
       if (match) {
         results.push({
           id: `internal-${audit.id}`,
           type: 'internal_audit',
           title: audit.id,
-          subtitle: `${audit.setor} - ${audit.responsavel}`,
+          subtitle: `${(audit as any).setor ?? 'Sem setor'} - ${(audit as any).responsavel ?? ''}`,
           link: '/auditorias-internas',
           icon: <ClipboardList className="h-4 w-4" />,
         });
@@ -52,18 +54,18 @@ const useGlobalSearch = (query: string) => {
     // Buscar em auditorias externas
     (externalAuditsQuery.data ?? []).forEach((audit) => {
       const match =
-        audit.id.toLowerCase().includes(lowerQuery) ||
-        audit.setor.toLowerCase().includes(lowerQuery) ||
-        audit.responsavel.toLowerCase().includes(lowerQuery) ||
-        audit.entidadeAuditora?.toLowerCase().includes(lowerQuery) ||
-        audit.descricao?.toLowerCase().includes(lowerQuery);
+        safeLower(audit.id).includes(lowerQuery) ||
+        safeLower((audit as any).setor).includes(lowerQuery) ||
+        safeLower((audit as any).responsavel).includes(lowerQuery) ||
+        safeLower((audit as any).entidadeAuditora).includes(lowerQuery) ||
+        safeLower((audit as any).descricao).includes(lowerQuery);
 
       if (match) {
         results.push({
           id: `external-${audit.id}`,
           type: 'external_audit',
           title: audit.id,
-          subtitle: `${audit.entidadeAuditora || audit.setor} - ${audit.responsavel}`,
+          subtitle: `${(audit as any).entidadeAuditora || (audit as any).setor || ''} - ${(audit as any).responsavel ?? ''}`,
           link: '/auditorias-externas',
           icon: <Briefcase className="h-4 w-4" />,
         });
@@ -73,9 +75,9 @@ const useGlobalSearch = (query: string) => {
     // Buscar em ações
     (actionsQuery.data ?? []).forEach((action) => {
       const match =
-        action.id.toLowerCase().includes(lowerQuery) ||
-        action.setor.toLowerCase().includes(lowerQuery) ||
-        action.descricao.toLowerCase().includes(lowerQuery);
+        safeLower(action.id).includes(lowerQuery) ||
+        safeLower((action as any).setor).includes(lowerQuery) ||
+        safeLower((action as any).descricao).includes(lowerQuery);
 
       if (match) {
         results.push({

@@ -24,3 +24,9 @@ ADD COLUMN "avaliacaoEficacia" TEXT;
 
 
 
+
+
+
+
+
+

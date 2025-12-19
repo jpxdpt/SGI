@@ -41,3 +41,14 @@ export const getSectorPerformance = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Erro ao obter performance por setor' });
   }
 };
+
+export const getOccurrenceBreakdown = async (req: AuthRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenantId;
+    const data = await analyticsService.getOccurrenceBreakdown({ tenantId });
+    res.json(data);
+  } catch (error) {
+    console.error('Error getting occurrence breakdown:', error);
+    res.status(500).json({ message: 'Erro ao obter estatísticas de ocorrências' });
+  }
+};

@@ -6,11 +6,11 @@ import {
   ListChecks,
   Settings,
   FileText,
-  Workflow,
   Files,
   FileBarChart,
   PieChart,
-  AlertTriangle
+  AlertTriangle,
+  BookOpenCheck
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -20,8 +20,8 @@ const navItems = [
   { to: '/ocorrencias-internas', label: 'Ocorrências Internas', icon: AlertTriangle },
   { to: '/auditorias-internas', label: 'Auditorias Internas', icon: ClipboardList },
   { to: '/auditorias-externas', label: 'Auditorias Externas', icon: Briefcase },
+  { to: '/programas-auditoria', label: 'Programas de Auditoria', icon: BookOpenCheck },
   { to: '/acoes', label: 'Ações Geradas', icon: ListChecks },
-  { to: '/workflows', label: 'Workflows', icon: Workflow },
   { to: '/documentos', label: 'Documentos', icon: Files },
   { to: '/relatorios', label: 'Relatórios', icon: FileBarChart },
   { to: '/logs', label: 'Logs', icon: FileText },

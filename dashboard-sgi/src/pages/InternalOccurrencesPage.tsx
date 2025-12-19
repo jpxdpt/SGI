@@ -53,6 +53,8 @@ const tipoOptions = [
   { value: 'Ambiental', label: 'Ambiental' },
   { value: 'Segurança dos Trabalhadores', label: 'Segurança dos Trabalhadores' },
   { value: 'Segurança Alimentar', label: 'Segurança Alimentar' },
+  { value: 'Reclamação', label: 'Reclamação' },
+  { value: 'Sugestão', label: 'Sugestão' },
 ];
 
 export const InternalOccurrencesPage = () => {

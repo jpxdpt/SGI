@@ -161,6 +161,32 @@ export class AnalyticsService {
       }))
       .sort((a, b) => b.riskLevel - a.riskLevel);
   }
+
+  async getOccurrenceBreakdown({ tenantId }: { tenantId: string }) {
+    const byType = await prisma.occurrence.groupBy({
+      by: ['tipo'],
+      where: { tenantId },
+      _count: { _all: true },
+    });
+
+    const byStatus = await prisma.occurrence.groupBy({
+      by: ['status'],
+      where: { tenantId },
+      _count: { _all: true },
+    });
+
+    const bySeverity = await prisma.occurrence.groupBy({
+      by: ['gravidade'],
+      where: { tenantId },
+      _count: { _all: true },
+    });
+
+    return {
+      byType,
+      byStatus,
+      bySeverity,
+    };
+  }
 }
 
 export const analyticsService = new AnalyticsService();

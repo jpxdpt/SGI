@@ -39,3 +39,9 @@ export const TableSkeleton = ({ columns, rows = 5 }: TableSkeletonProps) => (
 
 
 
+
+
+
+
+
+

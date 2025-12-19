@@ -51,7 +51,7 @@ export const actionItemSchema = z.object({
 });
 
 export const occurrenceSchema = z.object({
-  tipo: z.enum(['Ambiental', 'Segurança dos Trabalhadores', 'Segurança Alimentar'], {
+  tipo: z.enum(['Ambiental', 'Segurança dos Trabalhadores', 'Segurança Alimentar', 'Reclamação', 'Sugestão'], {
     message: 'Tipo de ocorrência é obrigatório',
   }),
   descricao: z.string().min(1, 'Descrição é obrigatória'),

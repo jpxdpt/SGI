@@ -5,6 +5,10 @@ export interface InternalAudit {
   iso?: string;
   inicio?: string;
   termino?: string;
+  setor?: string;
+  responsavel?: string;
+  descricao?: string;
+  status?: string;
 }
 
 export interface ExternalAudit {
@@ -14,6 +18,10 @@ export interface ExternalAudit {
   iso?: string;
   inicio?: string;
   termino?: string;
+  setor?: string;
+  responsavel?: string;
+  descricao?: string;
+  status?: string;
 }
 
 export type AcaoOrigem = 'Interna' | 'Externa' | 'Ocorrência';
@@ -48,7 +56,7 @@ export interface ActionItem {
 
 export interface Occurrence {
   id: string;
-  tipo: 'Ambiental' | 'Segurança dos Trabalhadores' | 'Segurança Alimentar';
+  tipo: 'Ambiental' | 'Segurança dos Trabalhadores' | 'Segurança Alimentar' | 'Reclamação' | 'Sugestão';
   setor: string; // Mantido para compatibilidade
   departamentosAtingidos: string[]; // Array de departamentos atingidos
   responsavel: string;

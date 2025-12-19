@@ -12,7 +12,12 @@ import {
   fetchExternalAudits,
   updateInternalAudit,
   updateExternalAudit,
+  fetchRootCauseAnalysis,
+  saveRootCauseAnalysis,
+  updateRootCauseAnalysis,
+  type RootCauseAnalysis,
 } from '../services/api';
+import { RootCauseAnalysisSelector, type AnalysisType } from '../components/root-cause-analysis/RootCauseAnalysisSelector';
 import type { ActionItem, AcaoOrigem, AcaoStatus, Conformidade, InternalAudit, ExternalAudit } from '../types/models';
 import { actionItemSchema } from '../utils/validation';
 import type { z } from 'zod';
@@ -76,6 +81,9 @@ export const ActionsPage = () => {
   const [saveFilterModal, setSaveFilterModal] = useState(false);
   const [filterName, setFilterName] = useState('');
   const { savedFilters, saveFilter, deleteFilter, applyFilter } = useSavedFilters<typeof filters>('actions');
+  const [rootCauseAnalysis, setRootCauseAnalysis] = useState<RootCauseAnalysis | null>(null);
+  const [rootCauseAnalysisType, setRootCauseAnalysisType] = useState<AnalysisType>(null);
+  const [rootCauseAnalysisData, setRootCauseAnalysisData] = useState<any>(null);
 
   const {
     register,
@@ -216,13 +224,38 @@ export const ActionsPage = () => {
   });
 
   const updateActionMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<ActionItem> }) =>
-      updateActionItem(id, payload),
+    mutationFn: async ({ id, payload, rootCauseAnalysisType, rootCauseAnalysisData, rootCauseAnalysis }: { 
+      id: string; 
+      payload: Partial<ActionItem>;
+      rootCauseAnalysisType?: AnalysisType;
+      rootCauseAnalysisData?: any;
+      rootCauseAnalysis?: RootCauseAnalysis | null;
+    }) => {
+      await updateActionItem(id, payload);
+      
+      // Salvar/atualizar análise de causa raiz se houver
+      if (rootCauseAnalysisType && rootCauseAnalysisData) {
+        if (rootCauseAnalysis) {
+          await updateRootCauseAnalysis(id, rootCauseAnalysisType, rootCauseAnalysisData);
+        } else {
+          await saveRootCauseAnalysis(id, rootCauseAnalysisType, rootCauseAnalysisData);
+        }
+      }
+      
+      return id;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['actions'] });
       queryClient.invalidateQueries({ queryKey: ['summary'] });
       queryClient.invalidateQueries({ queryKey: ['audits'] });
       showToast('Ação atualizada com sucesso!', 'success');
+      setModalOpen(false);
+      reset();
+      setEditingId(null);
+      setRelatedAudit(null);
+      setRootCauseAnalysis(null);
+      setRootCauseAnalysisType(null);
+      setRootCauseAnalysisData(null);
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Falha ao atualizar ação.';
@@ -359,6 +392,31 @@ export const ActionsPage = () => {
     setValue('evidencia', action.evidencia || '');
     setValue('avaliacaoEficacia', action.avaliacaoEficacia || '');
 
+    // Carregar análise de causa raiz
+    if (API_BASE) {
+      try {
+        const analysis = await fetchRootCauseAnalysis(action.id);
+        if (analysis) {
+          setRootCauseAnalysis(analysis);
+          setRootCauseAnalysisType(analysis.analysisType);
+          setRootCauseAnalysisData(analysis.data);
+        } else {
+          setRootCauseAnalysis(null);
+          setRootCauseAnalysisType(null);
+          setRootCauseAnalysisData(null);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar análise de causa raiz:', error);
+        setRootCauseAnalysis(null);
+        setRootCauseAnalysisType(null);
+        setRootCauseAnalysisData(null);
+      }
+    } else {
+      setRootCauseAnalysis(null);
+      setRootCauseAnalysisType(null);
+      setRootCauseAnalysisData(null);
+    }
+
     // Carregar auditoria relacionada
     if (action.acaoRelacionada) {
       if (action.origem === 'Interna') {
@@ -392,8 +450,14 @@ export const ActionsPage = () => {
       return;
     }
     if (editingId) {
-      // Atualizar ação
-      updateActionMutation.mutate({ id: editingId, payload: data });
+      // Atualizar ação (a análise de causa raiz será salva dentro da mutation)
+      updateActionMutation.mutate({ 
+        id: editingId, 
+        payload: data,
+        rootCauseAnalysisType,
+        rootCauseAnalysisData,
+        rootCauseAnalysis,
+      });
 
       // Se houver auditoria relacionada e os campos da auditoria foram alterados, atualizar a auditoria também
       if (relatedAudit) {
@@ -653,6 +717,9 @@ export const ActionsPage = () => {
           reset();
           setEditingId(null);
           setRelatedAudit(null);
+          setRootCauseAnalysis(null);
+          setRootCauseAnalysisType(null);
+          setRootCauseAnalysisData(null);
         }}
       >
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -780,13 +847,27 @@ export const ActionsPage = () => {
             required
           />
 
-          <Textarea
-            label="Causa Raíz Identificada"
-            {...register('causaRaizIdentificada')}
-            error={errors.causaRaizIdentificada?.message}
-            rows={3}
-            placeholder="Análise de causa (metodologia 5 Porquês, Ishikawa) e causa raiz"
-          />
+          <div>
+            <label className="text-sm font-medium text-[var(--color-foreground)] mb-2 block">
+              Análise de Causa Raiz
+            </label>
+            <RootCauseAnalysisSelector
+              actionItemId={editingId || ''}
+              initialType={rootCauseAnalysisType}
+              initialData={rootCauseAnalysisData}
+              onChange={(type, data) => {
+                setRootCauseAnalysisType(type);
+                setRootCauseAnalysisData(data);
+                // Atualizar também o campo legado para compatibilidade
+                if (data?.rootCause) {
+                  setValue('causaRaizIdentificada', data.rootCause);
+                }
+              }}
+              readOnly={false}
+            />
+            {/* Campo legado oculto para manter compatibilidade */}
+            <input type="hidden" {...register('causaRaizIdentificada')} />
+          </div>
 
           <Textarea
             label="Ação Corretiva"
@@ -876,6 +957,9 @@ export const ActionsPage = () => {
                 reset();
                 setEditingId(null);
                 setRelatedAudit(null);
+                setRootCauseAnalysis(null);
+                setRootCauseAnalysisType(null);
+                setRootCauseAnalysisData(null);
               }}
             >
               Cancelar
@@ -947,5 +1031,8 @@ export const ActionsPage = () => {
     </>
   );
 };
+
+
+
 
 

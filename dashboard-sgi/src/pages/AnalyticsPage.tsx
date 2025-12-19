@@ -4,7 +4,7 @@ import { Card } from '../components/ui/Card';
 import { KPICard } from '../components/analytics/KPICard';
 import { TrendCharts } from '../components/analytics/TrendCharts';
 import { SectorHeatmap } from '../components/analytics/SectorHeatmap';
-import { fetchDashboardKPIs, fetchAnalyticsTrends, fetchSectorPerformance, fetchSectors } from '../services/api';
+import { fetchDashboardKPIs, fetchAnalyticsTrends, fetchSectorPerformance, fetchSectors, fetchOccurrencesAnalytics } from '../services/api';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
@@ -30,9 +30,15 @@ export const AnalyticsPage = () => {
   const [sectors, setSectors] = useState<Sector[]>([]);
 
   useEffect(() => {
-    fetchSectors().then((data) => {
-      setSectors(data.map((s) => ({ id: s.id, nome: s.nome })));
-    });
+    fetchSectors()
+      .then((data) => {
+        // fetchSectors já retorna um array
+        setSectors(data.map((s: any) => ({ id: s.id, nome: s.nome || s.nome })));
+      })
+      .catch(() => {
+        // Em caso de erro, manter array vazio
+        setSectors([]);
+      });
   }, []);
 
   const { data: kpis, isLoading: loadingKPIs } = useQuery({
@@ -48,6 +54,11 @@ export const AnalyticsPage = () => {
   const { data: sectorPerformance, isLoading: loadingSectors } = useQuery({
     queryKey: ['analytics', 'sectors', dateRange],
     queryFn: () => fetchSectorPerformance() // Em produção passaria os filtros aqui
+  });
+
+  const { data: occurrencesAnalytics, isLoading: loadingOccurrences } = useQuery({
+    queryKey: ['analytics', 'occurrences'],
+    queryFn: () => fetchOccurrencesAnalytics(),
   });
 
   const handleExportPDF = () => {
@@ -124,7 +135,7 @@ export const AnalyticsPage = () => {
     XLSX.writeFile(wb, 'relatorio-bi.xlsx');
   };
 
-  const isLoading = loadingKPIs || loadingTrends || loadingSectors;
+  const isLoading = loadingKPIs || loadingTrends || loadingSectors || loadingOccurrences;
 
   if (isLoading) {
     return (
@@ -193,6 +204,18 @@ export const AnalyticsPage = () => {
             detail="Taxa de conclusão"
             accent={kpis.actions.complianceRate >= 80 ? 'primary' : 'secondary'}
           />
+          {occurrencesAnalytics && (
+            <>
+              <KPICard 
+                label="Reclamações" 
+                value={occurrencesAnalytics.byType.find((t) => t.tipo === 'RECLAMACAO')?._count._all || 0} 
+              />
+              <KPICard 
+                label="Sugestões" 
+                value={occurrencesAnalytics.byType.find((t) => t.tipo === 'SUGESTAO')?._count._all || 0} 
+              />
+            </>
+          )}
         </section>
       )}
 
@@ -200,6 +223,18 @@ export const AnalyticsPage = () => {
       <section className="grid gap-4 lg:grid-cols-2">
         <TrendCharts data={trends ?? []} />
         <SectorHeatmap data={sectorPerformance ?? []} />
+        {occurrencesAnalytics && (
+          <Card title="Ocorrências por tipo">
+            <div className="space-y-2">
+              {occurrencesAnalytics.byType.map((item) => (
+                <div key={item.tipo} className="flex justify-between text-sm">
+                  <span>{item.tipo}</span>
+                  <span className="font-semibold">{item._count._all}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </section>
     </div>
   );

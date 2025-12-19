@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 
 /**
  * Middleware CORS robusto que garante headers corretos em todas as respostas
- * Funciona mesmo em ambiente serverless (Vercel)
  */
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
@@ -28,4 +27,13 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
 
   next();
 };
+
+
+
+
+
+
+
+
+
 

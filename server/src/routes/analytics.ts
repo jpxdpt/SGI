@@ -11,5 +11,6 @@ router.use(authenticateToken);
 router.get('/kpis', requireRole('ADMIN', 'GESTOR'), AnalyticsController.getDashboardKPIs);
 router.get('/trends', requireRole('ADMIN', 'GESTOR'), AnalyticsController.getTrends);
 router.get('/sectors', requireRole('ADMIN', 'GESTOR'), AnalyticsController.getSectorPerformance);
+router.get('/occurrences', requireRole('ADMIN', 'GESTOR'), AnalyticsController.getOccurrenceBreakdown);
 
 export default router;

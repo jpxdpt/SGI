@@ -820,7 +820,381 @@ router.post('/:id/archive', authenticateToken, requireRole('ADMIN', 'GESTOR'), a
   }
 });
 
+/**
+ * @swagger
+ * /api/documents/{id}/read-confirmation:
+ *   post:
+ *     summary: Confirmar leitura de documento
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/:id/read-confirmation', authenticateToken, async (req: AuthRequest, res, next) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    // Verificar se documento existe e usuário tem acesso
+    const document = await prisma.document.findUnique({
+      where: { id },
+    });
+
+    if (!document || document.tenantId !== tenantId) {
+      res.status(404).json({ message: 'Documento não encontrado.' });
+      return;
+    }
+
+    // Verificar acesso
+    const userRole = req.user!.role as Role;
+    const hasAccess = await canAccessDocument(document, userId, userRole);
+    if (!hasAccess) {
+      res.status(403).json({ message: 'Sem permissão para aceder a este documento.' });
+      return;
+    }
+
+    // Verificar se já existe confirmação
+    const existing = await prisma.documentReadConfirmation.findUnique({
+      where: {
+        documentId_userId: {
+          documentId: id,
+          userId,
+        },
+      },
+    });
+
+    if (existing) {
+      // Atualizar confirmação existente
+      const updated = await prisma.documentReadConfirmation.update({
+        where: { id: existing.id },
+        data: {
+          confirmedAt: new Date(),
+          ipAddress: req.ip || req.headers['x-forwarded-for']?.toString() || undefined,
+          userAgent: req.headers['user-agent'] || undefined,
+        },
+      });
+      return res.json(updated);
+    }
+
+    // Criar nova confirmação
+    const confirmation = await prisma.documentReadConfirmation.create({
+      data: {
+        documentId: id,
+        tenantId,
+        userId,
+        ipAddress: req.ip || req.headers['x-forwarded-for']?.toString() || undefined,
+        userAgent: req.headers['user-agent'] || undefined,
+      },
+    });
+
+    res.status(201).json(confirmation);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/documents/{id}/read-confirmation:
+ *   get:
+ *     summary: Verificar se usuário leu o documento
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id/read-confirmation', authenticateToken, async (req: AuthRequest, res, next) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const confirmation = await prisma.documentReadConfirmation.findUnique({
+      where: {
+        documentId_userId: {
+          documentId: id,
+          userId,
+        },
+      },
+    });
+
+    res.json({ confirmed: !!confirmation, confirmation: confirmation || null });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/documents/{id}/read-confirmations:
+ *   get:
+ *     summary: Listar confirmações de leitura de um documento
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id/read-confirmations', authenticateToken, requireRole(['ADMIN', 'GESTOR']), async (req: AuthRequest, res, next) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { id } = req.params;
+
+    // Verificar se documento existe
+    const document = await prisma.document.findUnique({
+      where: { id },
+    });
+
+    if (!document || document.tenantId !== tenantId) {
+      res.status(404).json({ message: 'Documento não encontrado.' });
+      return;
+    }
+
+    const confirmations = await prisma.documentReadConfirmation.findMany({
+      where: { documentId: id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { confirmedAt: 'desc' },
+    });
+
+    res.json(confirmations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/documents/unread:
+ *   get:
+ *     summary: Listar documentos não lidos pelo usuário
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/unread', authenticateToken, async (req: AuthRequest, res, next) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = req.user!.id;
+    const userRole = req.user!.role as Role;
+    const { category, status, page = '1', limit = '20' } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Buscar todos os documentos aprovados do tenant
+    const allDocuments = await prisma.document.findMany({
+      where: {
+        tenantId,
+        status: status ? (status as DocumentStatus) : DocumentStatus.APPROVED,
+        ...(category && { category: category as string }),
+      },
+      include: {
+        readConfirmations: {
+          where: { userId },
+        },
+      },
+    });
+
+    // Filtrar documentos não lidos e verificar acesso
+    const unreadDocuments = [];
+    for (const doc of allDocuments) {
+      // Verificar acesso
+      const hasAccess = await canAccessDocument(doc, userId, userRole);
+      if (!hasAccess) continue;
+
+      // Verificar se foi lido
+      if (doc.readConfirmations.length === 0) {
+        unreadDocuments.push(doc);
+      }
+    }
+
+    const paginated = unreadDocuments.slice(skip, skip + limitNum);
+    const total = unreadDocuments.length;
+
+    res.json({
+      data: paginated.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        description: doc.description,
+        category: doc.category,
+        status: doc.status,
+        accessLevel: doc.accessLevel,
+        currentVersion: doc.currentVersion,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      })),
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/documents/compliance/stats:
+ *   get:
+ *     summary: Obter estatísticas de conformidade de leitura de documentos
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/compliance/stats', authenticateToken, requireRole(['ADMIN', 'GESTOR']), async (req: AuthRequest, res, next) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { category, startDate, endDate } = req.query;
+
+    // Buscar todos os documentos aprovados do tenant
+    const documents = await prisma.document.findMany({
+      where: {
+        tenantId,
+        status: DocumentStatus.APPROVED,
+        ...(category && { category: category as string }),
+        ...(startDate && { createdAt: { gte: new Date(startDate as string) } }),
+        ...(endDate && { createdAt: { lte: new Date(endDate as string) } }),
+      },
+      include: {
+        readConfirmations: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Contar total de documentos
+    const totalDocuments = documents.length;
+
+    // Contar total de confirmações
+    const totalConfirmations = documents.reduce((sum, doc) => sum + doc.readConfirmations.length, 0);
+
+    // Buscar todos os usuários do tenant
+    const allUsers = await prisma.user.findMany({
+      where: { tenantId },
+      select: { id: true },
+    });
+    const totalUsers = allUsers.length;
+
+    // Calcular total esperado (documentos * usuários com acesso)
+    let totalExpectedConfirmations = 0;
+    const documentStats = documents.map((doc) => {
+      // Simplificação: assumir que todos os usuários do tenant têm acesso
+      // Em produção, verificar permissões reais
+      const expected = totalUsers; // Simplificado
+      const confirmed = doc.readConfirmations.length;
+      totalExpectedConfirmations += expected;
+      
+      return {
+        documentId: doc.id,
+        title: doc.title,
+        category: doc.category,
+        totalExpected: expected,
+        totalConfirmed: confirmed,
+        complianceRate: expected > 0 ? (confirmed / expected) * 100 : 0,
+      };
+    });
+
+    // Estatísticas por categoria
+    const categoryStats = documents.reduce((acc, doc) => {
+      const cat = doc.category || 'Sem Categoria';
+      if (!acc[cat]) {
+        acc[cat] = {
+          totalDocuments: 0,
+          totalConfirmations: 0,
+          totalExpected: 0,
+        };
+      }
+      acc[cat].totalDocuments += 1;
+      acc[cat].totalConfirmations += doc.readConfirmations.length;
+      acc[cat].totalExpected += totalUsers; // Simplificado
+      return acc;
+    }, {} as Record<string, { totalDocuments: number; totalConfirmations: number; totalExpected: number }>);
+
+    const categoryCompliance = Object.entries(categoryStats).map(([category, stats]) => ({
+      category,
+      totalDocuments: stats.totalDocuments,
+      totalConfirmations: stats.totalConfirmations,
+      totalExpected: stats.totalExpected,
+      complianceRate: stats.totalExpected > 0 ? (stats.totalConfirmations / stats.totalExpected) * 100 : 0,
+    }));
+
+    // Estatísticas por usuário
+    const userStatsMap = new Map<string, { userId: string; userName: string; userEmail: string; totalRead: number; totalExpected: number }>();
+    
+    allUsers.forEach((user) => {
+      userStatsMap.set(user.id, {
+        userId: user.id,
+        userName: '',
+        userEmail: '',
+        totalRead: 0,
+        totalExpected: totalDocuments,
+      });
+    });
+
+    documents.forEach((doc) => {
+      doc.readConfirmations.forEach((confirmation) => {
+        const stats = userStatsMap.get(confirmation.userId);
+        if (stats) {
+          stats.totalRead += 1;
+          stats.userName = confirmation.user.name;
+          stats.userEmail = confirmation.user.email;
+        }
+      });
+    });
+
+    const userCompliance = Array.from(userStatsMap.values()).map((stats) => ({
+      userId: stats.userId,
+      userName: stats.userName,
+      userEmail: stats.userEmail,
+      totalRead: stats.totalRead,
+      totalExpected: stats.totalExpected,
+      complianceRate: stats.totalExpected > 0 ? (stats.totalRead / stats.totalExpected) * 100 : 0,
+    }));
+
+    // Taxa geral de conformidade
+    const overallComplianceRate = totalExpectedConfirmations > 0 
+      ? (totalConfirmations / totalExpectedConfirmations) * 100 
+      : 0;
+
+    res.json({
+      overview: {
+        totalDocuments,
+        totalUsers,
+        totalConfirmations,
+        totalExpectedConfirmations,
+        overallComplianceRate: Math.round(overallComplianceRate * 100) / 100,
+      },
+      byDocument: documentStats,
+      byCategory: categoryCompliance,
+      byUser: userCompliance,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
+
+
 
 
 

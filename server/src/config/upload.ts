@@ -4,29 +4,20 @@ import fs from 'fs';
 import { randomUUID } from 'crypto';
 
 // Diretório para armazenar ficheiros enviados
-// No Vercel serverless, não há sistema de ficheiros persistente
-// Usar /tmp para uploads temporários ou desabilitar uploads locais
-const UPLOAD_DIR = process.env.VERCEL 
-  ? '/tmp/uploads' 
-  : (process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads'));
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 
-// Garantir que o diretório existe (apenas se não estiver no Vercel ou se for /tmp)
+// Garantir que o diretório existe
 const ensureUploadDir = () => {
   try {
     if (!fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
   } catch (error) {
-    // No Vercel serverless, pode não conseguir criar diretórios
-    // Ignorar erro silenciosamente
     console.warn('[Upload] Não foi possível criar diretório de uploads:', error);
   }
 };
 
-// Apenas tentar criar se não estiver no Vercel (ou usar /tmp)
-if (!process.env.VERCEL || UPLOAD_DIR.startsWith('/tmp')) {
-  ensureUploadDir();
-}
+ensureUploadDir();
 
 // Tipos MIME permitidos
 const ALLOWED_MIME_TYPES = [
@@ -54,7 +45,7 @@ const storage = multer.diskStorage({
       const tenantId = req.headers['x-tenant-id'] as string || 'default';
       const tenantDir = path.join(UPLOAD_DIR, tenantId);
       
-      // Tentar criar diretório, mas não falhar se não conseguir (Vercel serverless)
+      // Tentar criar diretório do tenant
       try {
         if (!fs.existsSync(tenantDir)) {
           fs.mkdirSync(tenantDir, { recursive: true });
@@ -96,6 +87,13 @@ export const upload = multer({
 });
 
 export { UPLOAD_DIR };
+
+
+
+
+
+
+
 
 
 

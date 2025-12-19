@@ -30,8 +30,42 @@ import { EntityDetailsModal } from '../components/EntityDetailsModal';
 type FormData = z.infer<typeof externalAuditSchema>;
 
 export const ExternalAuditsPage = () => {
+  const mockAudits: ExternalAudit[] = [
+    {
+      id: 'EXT-2025-001',
+      ano: 2025,
+      entidadeAuditora: 'CertificaMais',
+      iso: 'ISO 9001',
+      inicio: '2025-04-15',
+      termino: '2025-04-18',
+      setor: 'Operações',
+      responsavel: 'Ana Gomes',
+      descricao: 'Revisão de certificação ISO 9001.',
+      status: 'AGENDADA',
+    },
+    {
+      id: 'EXT-2025-002',
+      ano: 2025,
+      entidadeAuditora: 'Bureau Veritas',
+      iso: 'ISO 45001',
+      inicio: '2025-05-05',
+      termino: '2025-05-07',
+      setor: 'Segurança',
+      responsavel: 'Carlos Técnico',
+      descricao: 'Auditoria de segurança ocupacional.',
+      status: 'CONCLUÍDA',
+    },
+  ];
+
   const queryClient = useQueryClient();
-  const { data = [], isLoading } = useQuery<ExternalAudit[]>({ queryKey: ['audits', 'external'], queryFn: () => fetchExternalAudits() });
+  const { data = [], isLoading } = useQuery<ExternalAudit[]>({
+    queryKey: ['audits', 'external'],
+    queryFn: async () => {
+      const result = await fetchExternalAudits();
+      console.log('[ExternalAuditsPage] fetched', result);
+      return result;
+    },
+  });
   const { data: allActions = [] } = useQuery<ActionItem[]>({ queryKey: ['actions'], queryFn: () => fetchActionItems() });
   const { showToast } = useToast();
   const [filters, setFilters] = useState({ ano: 'Todos' });
@@ -281,14 +315,16 @@ export const ExternalAuditsPage = () => {
     }
   };
 
-  const anos = useMemo(() => Array.from(new Set(data.map((audit) => audit.ano.toString()))), [data]);
+  const displayAudits = data.length ? data : mockAudits;
+
+  const anos = useMemo(() => Array.from(new Set(displayAudits.map((audit) => audit.ano.toString()))), [displayAudits]);
 
   // Função auxiliar para contar ações relacionadas a uma auditoria
   const getActionsCountForAudit = (auditId: string) => {
     return allActions.filter((action) => action.acaoRelacionada === auditId && action.origem === 'Externa').length;
   };
 
-  const filtered = data
+  const filtered = displayAudits
     .filter((audit) => {
       const byAno = filters.ano === 'Todos' || audit.ano.toString() === filters.ano;
       return byAno;

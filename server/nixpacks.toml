@@ -22,3 +22,10 @@ cmds = ["npx prisma generate"]
 [start]
 cmd = "npm run dev"
 
+
+
+
+
+
+
+

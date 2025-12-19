@@ -15,7 +15,9 @@ import {
   Tag as TagIcon,
   Archive,
   Search,
+  BarChart3,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   API_BASE,
   fetchDocuments,
@@ -27,6 +29,8 @@ import {
   downloadDocumentVersion,
   archiveDocument,
   fetchWorkflowDefinitions,
+  confirmDocumentRead,
+  checkDocumentReadStatus,
   type Document,
   type DocumentTag,
   type PaginatedDocumentsResponse,
@@ -95,6 +99,7 @@ const accessLevelLabels: Record<string, string> = {
 export const DocumentsPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,6 +121,9 @@ export const DocumentsPage = () => {
     open: false,
     id: null,
   });
+  const [readConfirmed, setReadConfirmed] = useState(false);
+  const [isCheckingReadStatus, setIsCheckingReadStatus] = useState(false);
+  const [hasReadConfirmation, setHasReadConfirmation] = useState(false);
 
   const { data, isLoading } = useQuery<PaginatedDocumentsResponse>({
     queryKey: ['documents', page, limit, filters],
@@ -229,6 +237,20 @@ export const DocumentsPage = () => {
     },
   });
 
+  const confirmReadMutation = useMutation({
+    mutationFn: confirmDocumentRead,
+    onSuccess: () => {
+      setReadConfirmed(true);
+      setHasReadConfirmation(true);
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      showToast('Leitura do documento confirmada!', 'success');
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Falha ao confirmar leitura.';
+      showToast(message, 'error');
+    },
+  });
+
   const handleNew = () => {
     reset({
       title: '',
@@ -264,6 +286,20 @@ export const DocumentsPage = () => {
         try {
           const fullDoc = await fetchDocument(document.id);
           setSelectedDocument(fullDoc);
+          
+          // Verificar status de confirmação de leitura
+          setIsCheckingReadStatus(true);
+          try {
+            const readStatus = await checkDocumentReadStatus(fullDoc.id);
+            setHasReadConfirmation(readStatus.confirmed);
+            setReadConfirmed(readStatus.confirmed);
+          } catch {
+            setHasReadConfirmation(false);
+            setReadConfirmed(false);
+          } finally {
+            setIsCheckingReadStatus(false);
+          }
+          
           setDetailsModalOpen(true);
           return;
         } catch {
@@ -271,9 +307,13 @@ export const DocumentsPage = () => {
         }
       }
       setSelectedDocument(document);
+      setReadConfirmed(false);
+      setHasReadConfirmation(false);
       setDetailsModalOpen(true);
     } catch {
       setSelectedDocument(document);
+      setReadConfirmed(false);
+      setHasReadConfirmation(false);
       setDetailsModalOpen(true);
     }
   };
@@ -389,6 +429,14 @@ export const DocumentsPage = () => {
         icon={<FileText className="h-6 w-6" />}
         actions={
           <>
+            <Button
+              onClick={() => navigate('/documentos/conformidade-leitura')}
+              variant="secondary"
+              icon={<BarChart3 className="h-4 w-4" />}
+              disabled={!API_BASE}
+            >
+              Relatório de Conformidade
+            </Button>
             <Button onClick={handleNew} icon={<Plus className="h-4 w-4" />} disabled={!API_BASE}>
               Novo Documento
             </Button>
@@ -1031,8 +1079,14 @@ export const DocumentsPage = () => {
         title={selectedDocument?.title || 'Detalhes do Documento'}
         open={detailsModalOpen}
         onClose={() => {
+          if (selectedDocument && selectedDocument.status === 'APPROVED' && !readConfirmed && !hasReadConfirmation) {
+            showToast('Deves confirmar a leitura do documento antes de fechar.', 'warning');
+            return;
+          }
           setDetailsModalOpen(false);
           setSelectedDocument(null);
+          setReadConfirmed(false);
+          setHasReadConfirmation(false);
         }}
         size="large"
       >
@@ -1233,6 +1287,46 @@ export const DocumentsPage = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Confirmação de Leitura - Obrigatória para documentos aprovados */}
+            {selectedDocument.status === 'APPROVED' && API_BASE && (
+              <div className="border-t border-[var(--color-border)] pt-4">
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                  <input
+                    type="checkbox"
+                    id="read-confirmation"
+                    checked={readConfirmed || hasReadConfirmation}
+                    onChange={async (e) => {
+                      if (e.target.checked && selectedDocument && !hasReadConfirmation) {
+                        try {
+                          await confirmReadMutation.mutateAsync(selectedDocument.id);
+                        } catch {
+                          // Erro já tratado na mutation
+                        }
+                      } else {
+                        setReadConfirmed(e.target.checked);
+                      }
+                    }}
+                    disabled={hasReadConfirmation || confirmReadMutation.isPending || isCheckingReadStatus}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="read-confirmation" className="block text-sm font-medium text-[var(--color-foreground)] cursor-pointer">
+                      Confirmo que li e compreendi este documento
+                      {!hasReadConfirmation && <span className="text-rose-500 ml-1">*</span>}
+                    </label>
+                    {hasReadConfirmation && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        ✓ Leitura confirmada em {new Date().toLocaleString('pt-PT')}
+                      </p>
+                    )}
+                    {isCheckingReadStatus && (
+                      <p className="text-xs text-slate-500 mt-1">A verificar status de leitura...</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

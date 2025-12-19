@@ -21,7 +21,6 @@ RUN npx prisma generate
 # Copiar código fonte (excluindo node_modules via .dockerignore)
 COPY src ./src
 COPY tsconfig.json ./
-COPY api ./api
 
 # Expor porta
 EXPOSE 5801
