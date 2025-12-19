@@ -7,6 +7,7 @@ import { useToast } from '../components/ui/Toast';
 export const LoginPage = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export const LoginPage = () => {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, password, companyName }),
         });
 
         const data = await response.json();
@@ -100,6 +101,23 @@ export const LoginPage = () => {
                   required
                   className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-xl bg-[var(--color-bg)] text-[var(--color-foreground)] focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                   placeholder="Ex: Manuel Silva"
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
+            {isRegistering && (
+              <div className="group animate-in fade-in slide-in-from-left-4 duration-400">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 ml-1">
+                  Nome da Empresa
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-xl bg-[var(--color-bg)] text-[var(--color-foreground)] focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                  placeholder="Ex: Minha Fábrica Lda"
                   disabled={isLoading}
                 />
               </div>

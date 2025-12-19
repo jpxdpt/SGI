@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from './AuthContext';
 
 interface Tenant {
   id: string;
@@ -16,47 +17,54 @@ interface TenantContextType {
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'sgi_current_tenant';
-const TENANTS_STORAGE_KEY = 'sgi_tenants';
-
-// Tenants padrão (pode ser substituído por uma API no futuro)
-const DEFAULT_TENANTS: Tenant[] = [
-  { id: 'tenant-default', name: 'Empresa Principal' },
-  { id: 'tenant-1', name: 'Filial Norte' },
-  { id: 'tenant-2', name: 'Filial Sul' },
-];
-
 export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [currentTenant, setCurrentTenantState] = useState<Tenant | null>(null);
-  const [tenants, setTenants] = useState<Tenant[]>(DEFAULT_TENANTS);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
 
-  // Carregar tenant atual e lista de tenants do localStorage
+  // Chaves de storage dinâmicas por utilizador
+  const userPrefix = user?.id ? `user_${user.id}_` : '';
+  const STORAGE_KEY = `${userPrefix}sgi_current_tenant`;
+  const TENANTS_STORAGE_KEY = `${userPrefix}sgi_tenants`;
+
   useEffect(() => {
+    if (!user) {
+      setCurrentTenantState(null);
+      setTenants([]);
+      return;
+    }
+
     try {
       const storedTenant = localStorage.getItem(STORAGE_KEY);
       const storedTenants = localStorage.getItem(TENANTS_STORAGE_KEY);
 
+      let loadedTenants: Tenant[] = [];
+
       if (storedTenants) {
-        const parsed = JSON.parse(storedTenants) as Tenant[];
-        setTenants(parsed);
+        loadedTenants = JSON.parse(storedTenants);
+      } else {
+        // Se o utilizador não tem empresas guardadas localmente, 
+        // começar com a empresa associada ao seu perfil na base de dados
+        loadedTenants = [{
+          id: user.tenantId,
+          name: user.tenant?.name || 'A Minha Empresa'
+        }];
+        localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(loadedTenants));
       }
 
+      setTenants(loadedTenants);
+
       if (storedTenant) {
-        const parsed = JSON.parse(storedTenant) as Tenant;
-        setCurrentTenantState(parsed);
-      } else if (DEFAULT_TENANTS.length > 0) {
-        // Se não houver tenant selecionado, usar o primeiro por padrão
-        setCurrentTenantState(DEFAULT_TENANTS[0]);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TENANTS[0]));
+        setCurrentTenantState(JSON.parse(storedTenant));
+      } else if (loadedTenants.length > 0) {
+        setCurrentTenantState(loadedTenants[0]);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(loadedTenants[0]));
       }
     } catch (error) {
-      console.error('Erro ao carregar tenant:', error);
-      if (DEFAULT_TENANTS.length > 0) {
-        setCurrentTenantState(DEFAULT_TENANTS[0]);
-      }
+      console.error('Erro ao carregar tenants:', error);
     }
-  }, []);
+  }, [user, STORAGE_KEY, TENANTS_STORAGE_KEY]);
 
   const setCurrentTenant = (tenant: Tenant) => {
     setCurrentTenantState(tenant);

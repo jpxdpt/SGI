@@ -73,20 +73,40 @@ router.use(authLimiter);
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, companyName } = req.body;
 
     if (!name || !email || !password) {
       res.status(400).json({ message: 'Dados incompletos (name, email e password são obrigatórios).' });
       return;
     }
 
-    // Default tenant se não vier no env ou body
-    const targetTenantId = process.env.DEFAULT_TENANT_ID || 'tenant-default';
-
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       res.status(409).json({ message: 'Email já está em uso.' });
       return;
+    }
+
+    // Gerar ou usar Tenant
+    let targetTenantId = process.env.DEFAULT_TENANT_ID || 'tenant-default';
+
+    if (companyName) {
+      // Criar um novo tenant para este utilizador
+      const newTenant = await prisma.tenant.create({
+        data: {
+          name: companyName,
+        },
+      });
+      targetTenantId = newTenant.id;
+    } else {
+      // Garantir que o tenant padrão existe
+      await prisma.tenant.upsert({
+        where: { id: targetTenantId },
+        update: {},
+        create: {
+          id: targetTenantId,
+          name: 'Empresa Principal',
+        },
+      });
     }
 
     const passwordHash = await hashPassword(password);
@@ -95,9 +115,12 @@ router.post('/register', async (req: Request, res: Response) => {
         name,
         email,
         passwordHash,
-        role: 'ADMIN', // Todos os utilizadores criados são ADMIN por padrão
+        role: 'ADMIN',
         tenantId: targetTenantId,
       },
+      include: {
+        tenant: true,
+      }
     });
 
     res.status(201).json({
