@@ -54,7 +54,7 @@ const logsQuerySchema = z.object({
  *         name: entity
  *         schema:
  *           type: string
- *         description: Filtrar por entidade (ex: InternalAudit, ActionItem)
+ *         description: "Filtrar por entidade (ex: InternalAudit, ActionItem)"
  *       - in: query
  *         name: userId
  *         schema:
