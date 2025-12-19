@@ -278,18 +278,20 @@ async function main() {
     });
 
     await prisma.workflowStep.deleteMany({ where: { workflowDefinitionId: def.id } });
-    await prisma.workflowStep.createMany({
-      data: wf.steps.map((step) => ({
-        workflowDefinitionId: def.id,
-        stepOrder: step.stepOrder,
-        stepType: step.stepType as WorkflowStepType,
-        name: step.name,
-        description: step.description,
-        requiredRoles: step.requiredRoles,
-        requiredUsers: [],
-        autoAdvance: false,
-      })),
-    });
+    for (const step of wf.steps) {
+      await prisma.workflowStep.create({
+        data: {
+          workflowDefinitionId: def.id,
+          stepOrder: step.stepOrder,
+          stepType: step.stepType as WorkflowStepType,
+          name: step.name,
+          description: step.description,
+          requiredRoles: step.requiredRoles,
+          requiredUsers: [],
+          autoAdvance: false,
+        },
+      });
+    }
   }
 
   await prisma.importLog.create({
