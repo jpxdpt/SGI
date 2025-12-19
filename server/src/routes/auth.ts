@@ -18,7 +18,7 @@ router.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-tenant-id, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
+
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -71,21 +71,17 @@ router.use(authLimiter);
  *       409:
  *         description: Email já está em uso
  */
-router.post('/register', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/register', async (req: Request, res: Response) => {
   try {
-    if (req.user?.role !== 'ADMIN') {
-      res.status(403).json({ message: 'Apenas administradores podem registar novos utilizadores.' });
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      res.status(400).json({ message: 'Dados incompletos (name, email e password são obrigatórios).' });
       return;
     }
 
-    const { name, email, password, role, tenantId } = req.body;
-
-    if (!name || !email || !password || !role) {
-      res.status(400).json({ message: 'Dados incompletos (name, email, password, role são obrigatórios).' });
-      return;
-    }
-
-    const targetTenantId = tenantId || req.user.tenantId;
+    // Default tenant se não vier no env ou body
+    const targetTenantId = process.env.DEFAULT_TENANT_ID || 'tenant-default';
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -99,7 +95,7 @@ router.post('/register', authenticateToken, async (req: AuthRequest, res: Respon
         name,
         email,
         passwordHash,
-        role: role.toUpperCase(),
+        role: 'ADMIN', // Todos os utilizadores criados são ADMIN por padrão
         tenantId: targetTenantId,
       },
     });
@@ -310,7 +306,7 @@ router.post('/logout', authenticateToken, async (req: AuthRequest, res: Response
     // Invalidar todas as sessões do utilizador
     if (req.user) {
       invalidateUserSessions(req.user.id);
-      
+
       // Registrar logout no audit trail
       await logAudit({
         tenantId: req.user.tenantId,
