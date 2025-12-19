@@ -282,7 +282,7 @@ async function main() {
       data: wf.steps.map((step) => ({
         workflowDefinitionId: def.id,
         stepOrder: step.stepOrder,
-        stepType: step.stepType,
+        stepType: step.stepType as WorkflowStepType,
         name: step.name,
         description: step.description,
         requiredRoles: step.requiredRoles,
