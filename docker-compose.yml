@@ -18,6 +18,9 @@ services:
       - sgi-uploads:/app/uploads
       - sgi-reports:/app/reports
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
       - sgi-network
 
