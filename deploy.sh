@@ -5,7 +5,7 @@ echo "🚀 Iniciando deploy..."
 
 # 1. Puxar as últimas alterações
 echo "📥 Fazendo git pull..."
-git pull origin main
+git pull origin master
 
 # 2. Reconstruir e reiniciar os containers
 echo "🛠️ Reconstruindo containers..."
