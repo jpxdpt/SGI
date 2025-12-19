@@ -28,3 +28,40 @@ export async function fetchAttachments(entityType?: string, entityId?: string): 
     if (entityId) query.append('entityId', entityId);
     return await apiRequest(`/attachments?${query.toString()}`);
 }
+
+export async function uploadAttachment(formData: FormData): Promise<any> {
+    const { API_BASE } = await import('./base');
+    if (!API_BASE) return;
+    const token = localStorage.getItem('accessToken');
+    const tenantId = localStorage.getItem('tenantId') || 'tenant-default';
+
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    const response = await fetch(`${API_BASE}/attachments/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+    });
+    if (!response.ok) throw new Error('Falha no upload');
+    return response.json();
+}
+
+export async function downloadAttachment(id: string): Promise<Blob> {
+    const { API_BASE } = await import('./base');
+    if (!API_BASE) return new Blob();
+    const token = localStorage.getItem('accessToken');
+    const tenantId = localStorage.getItem('tenantId') || 'tenant-default';
+
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    const response = await fetch(`${API_BASE}/attachments/${id}/download`, {
+        method: 'GET',
+        headers,
+    });
+    if (!response.ok) throw new Error('Falha no download');
+    return response.blob();
+}
