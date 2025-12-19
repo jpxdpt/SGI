@@ -107,7 +107,7 @@ export const AnalyticsPage = () => {
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new();
-    
+
     // KPIs Sheet
     const kpiData = [
       { Indicador: 'Total Auditorias', Valor: kpis?.audits?.total || 0 },
@@ -172,7 +172,7 @@ export const AnalyticsPage = () => {
               onChange={(range) => setDateRange(range)}
             />
           </div>
-          
+
           <div className="w-full md:w-64">
             <Select
               label="Filtrar por Setor"
@@ -188,48 +188,46 @@ export const AnalyticsPage = () => {
       </Card>
 
       {/* KPIs */}
-      {kpis && (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KPICard label="Auditorias internas" value={kpis.audits.internal} />
-          <KPICard label="Auditorias externas" value={kpis.audits.external} />
-          <KPICard 
-            label="Ações geradas" 
-            value={kpis.actions.total} 
-            delta={kpis.actions.overdue > 0 ? `${kpis.actions.overdue} em atraso` : undefined}
-            accent={kpis.actions.overdue > 0 ? 'secondary' : 'primary'} 
-          />
-          <KPICard 
-            label="Conformidade" 
-            value={`${kpis.actions.complianceRate}%`} 
-            detail="Taxa de conclusão"
-            accent={kpis.actions.complianceRate >= 80 ? 'primary' : 'secondary'}
-          />
-          {occurrencesAnalytics && (
-            <>
-              <KPICard 
-                label="Reclamações" 
-                value={occurrencesAnalytics.byType.find((t) => t.tipo === 'RECLAMACAO')?._count._all || 0} 
-              />
-              <KPICard 
-                label="Sugestões" 
-                value={occurrencesAnalytics.byType.find((t) => t.tipo === 'SUGESTAO')?._count._all || 0} 
-              />
-            </>
-          )}
-        </section>
-      )}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KPICard label="Auditorias internas" value={kpis?.audits?.internal ?? 0} />
+        <KPICard label="Auditorias externas" value={kpis?.audits?.external ?? 0} />
+        <KPICard
+          label="Ações geradas"
+          value={kpis?.actions?.total ?? 0}
+          delta={kpis?.actions?.overdue > 0 ? `${kpis.actions.overdue} em atraso` : undefined}
+          accent={kpis?.actions?.overdue > 0 ? 'secondary' : 'primary'}
+        />
+        <KPICard
+          label="Conformidade"
+          value={`${kpis?.actions?.complianceRate ?? 0}%`}
+          detail="Taxa de conclusão"
+          accent={(kpis?.actions?.complianceRate ?? 0) >= 80 ? 'primary' : 'secondary'}
+        />
+        {occurrencesAnalytics?.byType && (
+          <>
+            <KPICard
+              label="Reclamações"
+              value={occurrencesAnalytics.byType.find((t: any) => t.tipo === 'RECLAMACAO')?._count?._all || 0}
+            />
+            <KPICard
+              label="Sugestões"
+              value={occurrencesAnalytics.byType.find((t: any) => t.tipo === 'SUGESTAO')?._count?._all || 0}
+            />
+          </>
+        )}
+      </section>
 
       {/* Gráficos */}
       <section className="grid gap-4 lg:grid-cols-2">
         <TrendCharts data={trends ?? []} />
         <SectorHeatmap data={sectorPerformance ?? []} />
-        {occurrencesAnalytics && (
+        {occurrencesAnalytics?.byType && (
           <Card title="Ocorrências por tipo">
             <div className="space-y-2">
-              {occurrencesAnalytics.byType.map((item) => (
+              {occurrencesAnalytics.byType.map((item: any) => (
                 <div key={item.tipo} className="flex justify-between text-sm">
                   <span>{item.tipo}</span>
-                  <span className="font-semibold">{item._count._all}</span>
+                  <span className="font-semibold">{item._count?._all ?? 0}</span>
                 </div>
               ))}
             </div>

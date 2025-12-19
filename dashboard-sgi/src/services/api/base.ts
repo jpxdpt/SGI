@@ -26,6 +26,11 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     });
 
     if (!response.ok) {
+        if (response.status === 401) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
         const error = await response.json().catch(() => ({ message: 'Erro na requisição' }));
         throw new Error(error.message || `HTTP ${response.status}`);
     }
