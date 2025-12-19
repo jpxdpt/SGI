@@ -10,8 +10,7 @@ import {
   FileBarChart,
   PieChart,
   AlertTriangle,
-  BookOpenCheck,
-  Users
+  BookOpenCheck
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -26,7 +25,6 @@ const navItems = [
   { to: '/documentos', label: 'Documentos', icon: Files },
   { to: '/relatorios', label: 'Relatórios', icon: FileBarChart },
   { to: '/logs', label: 'Logs', icon: FileText },
-  { to: '/utilizadores', label: 'Utilizadores', icon: Users },
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 

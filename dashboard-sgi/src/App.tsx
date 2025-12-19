@@ -55,7 +55,6 @@ function App() {
                       <Route path="/relatorios" element={<ReportsPage />} />
                       <Route path="/logs" element={<LogsPage />} />
                       <Route path="/configuracoes" element={<SettingsPage />} />
-                      <Route path="/utilizadores" element={<UsersPage />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </ErrorBoundary>
