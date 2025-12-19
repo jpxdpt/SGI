@@ -34,6 +34,7 @@ import actionsRoutes from './routes/actions';
 import occurrencesRoutes from './routes/occurrences';
 import sectorsRoutes from './routes/sectors';
 import importRoutes from './routes/import';
+import usersRoutes from './routes/users';
 
 const app = express();
 
@@ -112,6 +113,7 @@ apiRouter.use('/actions', actionsRoutes);
 apiRouter.use('/occurrences', occurrencesRoutes);
 apiRouter.use('/sectors', sectorsRoutes);
 apiRouter.use('/import', importRoutes);
+apiRouter.use('/users', authenticateToken, usersRoutes);
 
 apiRouter.get('/summary', authenticateToken, async (req: AuthRequest, res, next) => {
   try {

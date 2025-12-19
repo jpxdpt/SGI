@@ -12,6 +12,7 @@ export * from './auditPrograms';
 export * from './workflows';
 export * from './reports';
 export * from './import';
+export * from './users';
 
 // Approvals
 export async function fetchApprovals(): Promise<any[]> {

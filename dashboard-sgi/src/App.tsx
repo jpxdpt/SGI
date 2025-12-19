@@ -21,6 +21,7 @@ const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ defa
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage }))); // New Analytics Page
 const InternalOccurrencesPage = lazy(() => import('./pages/InternalOccurrencesPage').then((m) => ({ default: m.InternalOccurrencesPage })));
 const AuditProgramsPage = lazy(() => import('./pages/AuditProgramsPage').then((m) => ({ default: m.AuditProgramsPage })));
+const UsersPage = lazy(() => import('./pages/UsersPage').then((m) => ({ default: m.UsersPage })));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -54,6 +55,7 @@ function App() {
                       <Route path="/relatorios" element={<ReportsPage />} />
                       <Route path="/logs" element={<LogsPage />} />
                       <Route path="/configuracoes" element={<SettingsPage />} />
+                      <Route path="/utilizadores" element={<UsersPage />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </ErrorBoundary>
