@@ -1,4 +1,4 @@
-import { PrismaClient, Role, OccurrenceType } from '@prisma/client';
+import { PrismaClient, Role, OccurrenceType, WorkflowStepType, ActionStatus, Impact, OccurrenceStatus, OccurrenceSeverity } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { hashPassword } from '../src/utils/password';
 
@@ -157,8 +157,8 @@ async function main() {
       descricao: 'Implementar plano corretivo',
       dataAbertura: new Date(),
       dataLimite: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      impacto: 'MEDIO',
-      status: 'ANDAMENTO',
+      impacto: Impact.MEDIO,
+      status: ActionStatus.ANDAMENTO,
     },
   });
 
@@ -172,8 +172,8 @@ async function main() {
       responsavel: 'Carlos Técnico',
       data: new Date(),
       descricao: 'Ocorrência de desvio no procedimento',
-      gravidade: 'MEDIA',
-      status: 'EM_MITIGACAO',
+      gravidade: OccurrenceSeverity.MEDIA,
+      status: OccurrenceStatus.EM_MITIGACAO,
       acaoGerada: 'Implementar plano corretivo',
     },
   });
@@ -188,8 +188,8 @@ async function main() {
       responsavel: 'Atendimento Cliente',
       data: new Date(),
       descricao: 'Reclamação de cliente sobre prazo de entrega.',
-      gravidade: 'ALTA',
-      status: 'ABERTA',
+      gravidade: OccurrenceSeverity.ALTA,
+      status: OccurrenceStatus.ABERTA,
       acaoGerada: 'Abrir ação corretiva',
     },
   });
@@ -204,8 +204,8 @@ async function main() {
       responsavel: 'Colaborador Loja',
       data: new Date(),
       descricao: 'Sugestão de melhoria no processo de retorno de produtos.',
-      gravidade: 'BAIXA',
-      status: 'EM_MITIGACAO',
+      gravidade: OccurrenceSeverity.BAIXA,
+      status: OccurrenceStatus.EM_MITIGACAO,
       acaoGerada: 'Avaliar viabilidade',
     },
   });
@@ -220,14 +220,14 @@ async function main() {
       steps: [
         {
           stepOrder: 1,
-          stepType: 'APPROVAL',
+          stepType: WorkflowStepType.APPROVAL,
           name: 'Triagem',
           description: 'Avaliar a reclamação e validar dados.',
           requiredRoles: ['GESTOR'],
         },
         {
           stepOrder: 2,
-          stepType: 'NOTIFICATION',
+          stepType: WorkflowStepType.NOTIFICATION,
           name: 'Notificar Qualidade',
           description: 'Enviar notificação para equipa de Qualidade.',
           requiredRoles: ['GESTOR'],
@@ -242,14 +242,14 @@ async function main() {
       steps: [
         {
           stepOrder: 1,
-          stepType: 'APPROVAL',
+          stepType: WorkflowStepType.APPROVAL,
           name: 'Avaliar sugestão',
           description: 'Analisar viabilidade e impacto.',
           requiredRoles: ['GESTOR'],
         },
         {
           stepOrder: 2,
-          stepType: 'NOTIFICATION',
+          stepType: WorkflowStepType.NOTIFICATION,
           name: 'Notificar responsável',
           description: 'Notificar responsável pela implementação.',
           requiredRoles: ['GESTOR'],
