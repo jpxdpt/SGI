@@ -85,3 +85,56 @@ export async function checkDocumentReadStatus(documentId: string): Promise<any> 
         return { confirmed: false, confirmation: null };
     }
 }
+
+export async function uploadDocumentVersion(documentId: string, formData: FormData): Promise<any> {
+    const { API_BASE } = await import('./base');
+    const token = localStorage.getItem('accessToken');
+    const tenantId = localStorage.getItem('tenantId') || 'tenant-default';
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    const response = await fetch(`${API_BASE}/documents/${documentId}/versions`, {
+        method: 'POST',
+        headers,
+        body: formData,
+    });
+    if (!response.ok) throw new Error('Falha no upload');
+    return response.json();
+}
+
+export async function downloadDocumentVersion(documentId: string, versionId: string): Promise<Blob> {
+    const { API_BASE } = await import('./base');
+    const token = localStorage.getItem('accessToken');
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${API_BASE}/documents/${documentId}/versions/${versionId}/download`, {
+        headers,
+    });
+    if (!response.ok) throw new Error('Falha no download');
+    return response.blob();
+}
+
+export async function fetchDocumentReadConfirmations(documentId: string): Promise<any[]> {
+    const { apiRequest } = await import('./base');
+    try {
+        return await apiRequest(`/documents/${documentId}/read-confirmations`);
+    } catch {
+        return [];
+    }
+}
+
+export async function fetchUnreadDocuments(params?: any): Promise<any> {
+    const { apiRequest, API_BASE } = await import('./base');
+    if (!API_BASE) return { data: [], pagination: { total: 0 } };
+    const query = new URLSearchParams(params).toString();
+    return await apiRequest(`/documents/unread?${query}`);
+}
+
+export async function fetchDocumentReadComplianceStats(params?: any): Promise<any> {
+    const { apiRequest, API_BASE } = await import('./base');
+    if (!API_BASE) return { overview: {}, byDocument: [], byCategory: [], byUser: [] };
+    const query = new URLSearchParams(params).toString();
+    return await apiRequest(`/documents/compliance/stats?${query}`);
+}

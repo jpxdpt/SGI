@@ -12,11 +12,26 @@ export * from './auditPrograms';
 export * from './workflows';
 export * from './reports';
 
-// Approvals placeholders
+// Approvals
 export async function fetchApprovals(): Promise<any[]> {
     const { apiRequest, API_BASE } = await import('./base');
     if (!API_BASE) return [];
     return await apiRequest('/approvals');
+}
+
+export async function fetchApproval(id: string): Promise<any> {
+    const { apiRequest } = await import('./base');
+    return await apiRequest(`/approvals/${id}`);
+}
+
+export async function createApproval(data: any): Promise<any> {
+    const { apiRequest } = await import('./base');
+    return await apiRequest('/approvals', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateApproval(id: string, data: any): Promise<any> {
+    const { apiRequest } = await import('./base');
+    return await apiRequest(`/approvals/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
 export async function approveItem(id: string, comment?: string): Promise<any> {
